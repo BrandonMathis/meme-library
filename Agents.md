@@ -32,11 +32,18 @@ Expo React Native application using Expo Router with file-based routing.
 
 ## Pre-Commit Rules
 
-Before every git commit, you **must** ensure linting and formatting pass:
+Before every git commit, you **must** ensure tests, linting, and formatting pass:
 
-1. Run `npm run lint` and fix any errors
-2. Run `npx prettier --check .` and fix any issues with `npx prettier --write .`
-3. Only commit once both commands pass cleanly
+1. Run `npm test` and fix any failing tests
+2. Run `npm run lint` and fix any errors
+3. Run `npx prettier --check .` and fix any issues with `npx prettier --write .`
+4. Only commit once all tests pass and both commands pass cleanly
+
+## Testing Guidelines
+
+- **Always add tests** when adding new functionality or modifying existing functionality.
+- Tests should cover the new or changed behavior to prevent regressions.
+- Run `npm test` before every commit to ensure nothing is broken.
 
 ## UI Component Rules
 
