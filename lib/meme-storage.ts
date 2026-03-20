@@ -92,3 +92,22 @@ export async function updateMemeTags(id: string, tags: string[]): Promise<void> 
   const database = await getDb();
   await database.runAsync('UPDATE memes SET tags = ? WHERE id = ?', JSON.stringify(tags), id);
 }
+
+export async function destroyAll(): Promise<void> {
+  const database = await getDb();
+  await database.runAsync('DELETE FROM memes');
+
+  try {
+    const dirInfo = await FileSystem.getInfoAsync(MEMES_DIR);
+    if (dirInfo.exists) {
+      await FileSystem.deleteAsync(MEMES_DIR, { idempotent: true });
+    }
+  } catch {
+    // Silently ignore cleanup errors
+  }
+}
+
+export async function exportData(): Promise<string> {
+  const memes = await getAllMemes();
+  return JSON.stringify(memes, null, 2);
+}

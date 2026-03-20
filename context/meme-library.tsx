@@ -3,6 +3,8 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import {
   copyImageToLocal,
   deleteLocalImage,
+  destroyAll as destroyAllFromDb,
+  exportData as exportDataFromDb,
   getAllMemes,
   insertMeme,
   removeMeme as removeMemeFromDb,
@@ -22,6 +24,8 @@ type MemeLibraryContextType = {
   addMeme: (uri: string, tags: string[]) => Promise<void>;
   deleteMeme: (id: string) => Promise<void>;
   editTags: (id: string, tags: string[]) => Promise<void>;
+  destroyAll: () => Promise<void>;
+  exportData: () => Promise<string>;
 };
 
 const MemeLibraryContext = createContext<MemeLibraryContextType>({
@@ -30,6 +34,8 @@ const MemeLibraryContext = createContext<MemeLibraryContextType>({
   addMeme: async () => {},
   deleteMeme: async () => {},
   editTags: async () => {},
+  destroyAll: async () => {},
+  exportData: async () => '',
 });
 
 export function MemeLibraryProvider({ children }: { children: ReactNode }) {
@@ -65,8 +71,19 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
     setMemes((prev) => prev.map((m) => (m.id === id ? { ...m, tags } : m)));
   }, []);
 
+  const destroyAll = useCallback(async () => {
+    await destroyAllFromDb();
+    setMemes([]);
+  }, []);
+
+  const exportData = useCallback(async () => {
+    return exportDataFromDb();
+  }, []);
+
   return (
-    <MemeLibraryContext.Provider value={{ memes, isLoading, addMeme, deleteMeme, editTags }}>
+    <MemeLibraryContext.Provider
+      value={{ memes, isLoading, addMeme, deleteMeme, editTags, destroyAll, exportData }}
+    >
       {children}
     </MemeLibraryContext.Provider>
   );

@@ -88,3 +88,15 @@ export async function updateMemeTags(id: string, tags: string[]): Promise<void> 
     await idbRequest(store.put({ ...existing, tags }));
   }
 }
+
+export async function destroyAll(): Promise<void> {
+  const db = await openDb();
+  const tx = db.transaction([MEMES_STORE, IMAGES_STORE], 'readwrite');
+  await idbRequest(tx.objectStore(MEMES_STORE).clear());
+  await idbRequest(tx.objectStore(IMAGES_STORE).clear());
+}
+
+export async function exportData(): Promise<string> {
+  const memes = await getAllMemes();
+  return JSON.stringify(memes, null, 2);
+}
