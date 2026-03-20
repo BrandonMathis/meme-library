@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MemeLibrary",
-    "slug": "MemeLibrary",
+    "slug": "meme-library",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,15 +9,17 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "sdkVersion"
     },
     "updates": {
       "url": "https://u.expo.dev/0384d7bc-46fe-4f87-ba0f-9c97ef0cad38"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.memelibrary.app"
     },
     "android": {
+      "package": "com.memelibrary.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
