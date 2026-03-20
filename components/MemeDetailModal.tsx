@@ -22,7 +22,7 @@ type Props = {
 
 const DISMISS_THRESHOLD = 150;
 
-export default function MemeDetailModal({ meme, onClose }: Props) {
+export default function MemeDetailsModal({ meme, onClose }: Props) {
   const { deleteMeme, toggleFavorite } = useMemeLibrary();
   const { height: screenHeight } = useWindowDimensions();
 

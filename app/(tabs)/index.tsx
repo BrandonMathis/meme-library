@@ -7,12 +7,12 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useMemeLibrary, type MemeEntry } from '@/context/MemeLibrary';
-import MemeDetailModal from '@/components/MemeDetailModal';
+import MemeDetailsModal from '@/components/MemeDetailModal';
 
 const NUM_COLUMNS = 2;
 const GAP = 8;
 
-export default function LibraryScreen() {
+export default function MemeLibraryScreen() {
   const { memes } = useMemeLibrary();
   const [search, setSearch] = useState('');
   const [selectedMeme, setSelectedMeme] = useState<MemeEntry | null>(null);
@@ -56,7 +56,7 @@ export default function LibraryScreen() {
     <View className="flex-1 bg-background">
       <View className="px-4 pb-2 pt-14">
         <Text variant="h3" className="mb-3">
-          Library
+          Meme Library
         </Text>
         <View className="flex-row items-center gap-2">
           <View className="relative flex-1">
@@ -92,7 +92,7 @@ export default function LibraryScreen() {
         />
       )}
 
-      <MemeDetailModal meme={selectedMeme} onClose={() => setSelectedMeme(null)} />
+      <MemeDetailsModal meme={selectedMeme} onClose={() => setSelectedMeme(null)} />
     </View>
   );
 }

@@ -11,7 +11,7 @@ const NUM_COLUMNS = 3;
 const NUM_PHOTOS = 50;
 const GAP = 2;
 
-export default function AddScreen() {
+export default function AddMemeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { bottom } = useSafeAreaInsets();
