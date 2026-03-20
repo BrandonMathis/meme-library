@@ -1,6 +1,5 @@
-import { Modal, View, Pressable, Alert, Platform } from 'react-native';
+import { Modal, View, Pressable, Alert, Platform, Share } from 'react-native';
 import { Image } from 'expo-image';
-import * as Sharing from 'expo-sharing';
 
 import { Text } from '@/components/ui/text';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -17,10 +16,9 @@ export default function MemeDetailModal({ meme, onClose }: Props) {
   if (!meme) return null;
 
   const handleShare = async () => {
-    const available = await Sharing.isAvailableAsync();
-    if (available) {
-      await Sharing.shareAsync(meme.uri);
-    } else {
+    try {
+      await Share.share({ url: meme.uri, message: meme.uri });
+    } catch {
       Alert.alert('Sharing is not available on this device');
     }
   };
