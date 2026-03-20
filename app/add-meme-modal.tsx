@@ -42,7 +42,7 @@ export default function AddMemeModal() {
         className="flex-1 p-4"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View className="z-10 mb-4 flex-row items-center justify-between">
+        <View className="mb-4 flex-row items-center justify-between">
           <Button variant="ghost" onPress={() => router.back()}>
             <Text>Cancel</Text>
           </Button>
@@ -54,16 +54,18 @@ export default function AddMemeModal() {
           </Button>
         </View>
 
-        {uri && (
-          <Image
-            source={{ uri }}
-            style={{ width: '100%', height: 250, borderRadius: 12 }}
-            contentFit="contain"
-          />
-        )}
+        <View className="items-center">
+          {uri && (
+            <Image
+              source={{ uri }}
+              style={{ width: '100%', height: 250, borderRadius: 12 }}
+              contentFit="contain"
+            />
+          )}
+        </View>
 
-        <ScrollView keyboardShouldPersistTaps="handled" className="flex-grow-0">
-          <View className="mt-4 flex-row gap-2">
+        <View className="mt-4">
+          <View className="flex-row gap-2">
             <View className="flex-1">
               <Input
                 placeholder="Add a tag..."
@@ -86,7 +88,7 @@ export default function AddMemeModal() {
               </Badge>
             ))}
           </View>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
