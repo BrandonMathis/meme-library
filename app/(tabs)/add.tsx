@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FlatList, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -17,6 +17,7 @@ export default function AddScreen() {
   const { bottom } = useSafeAreaInsets();
   const imageSize = (width - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
+  const flatListRef = useRef<FlatList>(null);
   const [photos, setPhotos] = useState<MediaLibrary.Asset[]>([]);
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>(
     'undetermined',
@@ -71,11 +72,17 @@ export default function AddScreen() {
         <Text variant="muted">Tap a photo to add it to your library</Text>
       </View>
       <FlatList
+        ref={flatListRef}
         data={photos}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: GAP, paddingBottom: bottom + 80 }}
         columnWrapperStyle={{ gap: GAP }}
+        onContentSizeChange={() => {
+          if (photos.length > 0) {
+            flatListRef.current?.scrollToEnd({ animated: false });
+          }
+        }}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handlePhotoPress(item)} activeOpacity={0.7}>
             <Image source={{ uri: item.uri }} style={{ width: imageSize, height: imageSize }} />
