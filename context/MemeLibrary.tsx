@@ -13,6 +13,8 @@ type MemeLibraryContextType = {
   addMeme: (uri: string, tags: string[]) => void;
   deleteMeme: (id: string) => void;
   toggleFavorite: (id: string) => void;
+  lastAddedId: string | null;
+  clearLastAdded: () => void;
 };
 
 const MemeLibraryContext = createContext<MemeLibraryContextType>({
@@ -20,15 +22,23 @@ const MemeLibraryContext = createContext<MemeLibraryContextType>({
   addMeme: () => {},
   deleteMeme: () => {},
   toggleFavorite: () => {},
+  lastAddedId: null,
+  clearLastAdded: () => {},
 });
 
 export function MemeLibraryProvider({ children }: { children: ReactNode }) {
   const [memes, setMemes] = useState<MemeEntry[]>([]);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+
+  const clearLastAdded = useCallback(() => {
+    setLastAddedId(null);
+  }, []);
 
   const addMeme = useCallback((uri: string, tags: string[]) => {
+    const id = Date.now().toString();
     setMemes((prev) => [
       {
-        id: Date.now().toString(),
+        id,
         uri,
         tags,
         createdAt: Date.now(),
@@ -36,6 +46,7 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
       },
       ...prev,
     ]);
+    setLastAddedId(id);
   }, []);
 
   const deleteMeme = useCallback((id: string) => {
@@ -47,7 +58,9 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <MemeLibraryContext.Provider value={{ memes, addMeme, deleteMeme, toggleFavorite }}>
+    <MemeLibraryContext.Provider
+      value={{ memes, addMeme, deleteMeme, toggleFavorite, lastAddedId, clearLastAdded }}
+    >
       {children}
     </MemeLibraryContext.Provider>
   );
