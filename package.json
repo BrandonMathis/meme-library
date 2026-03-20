@@ -60,7 +60,9 @@
   },
   "expo": {
     "install": {
-      "exclude": ["expo-media-library"]
+      "exclude": [
+        "expo-media-library"
+      ]
     }
   },
   "private": true
