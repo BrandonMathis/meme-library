@@ -3,12 +3,12 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-export default function LibraryScreen() {
+export default function AddScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>
-        <ThemedText type="title">Library</ThemedText>
-        <ThemedText>Your meme collection will appear here.</ThemedText>
+        <ThemedText type="title">Add Meme</ThemedText>
+        <ThemedText>Add a new meme to your library.</ThemedText>
       </View>
     </ThemedView>
   );
