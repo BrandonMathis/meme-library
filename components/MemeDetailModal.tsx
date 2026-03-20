@@ -9,7 +9,8 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import * as Sharing from 'expo-sharing';
-import { Paths, File } from 'expo-file-system';
+import { Paths } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system';
 
 import { Text } from '@/components/ui/Text';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -99,17 +100,22 @@ export default function MemeDetailModal({ meme, onClose }: Props) {
         return;
       }
 
-      if (meme.uri.startsWith('file://') || meme.uri.startsWith('content://')) {
-        await Sharing.shareAsync(meme.uri, { mimeType: 'image/jpeg' });
-      } else {
-        const downloaded = await File.downloadFileAsync(
-          meme.uri,
-          new File(Paths.cache, `meme_share_${Date.now()}.jpg`),
-        );
-        await Sharing.shareAsync(downloaded.uri, { mimeType: 'image/jpeg' });
+      let shareUri = meme.uri;
+
+      if (!meme.uri.startsWith('file://')) {
+        const cacheUri = `${Paths.cache}/meme_share_${Date.now()}.jpg`;
+        if (meme.uri.startsWith('http://') || meme.uri.startsWith('https://')) {
+          const result = await FileSystem.downloadAsync(meme.uri, cacheUri);
+          shareUri = result.uri;
+        } else {
+          await FileSystem.copyAsync({ from: meme.uri, to: cacheUri });
+          shareUri = cacheUri;
+        }
       }
+
+      await Sharing.shareAsync(shareUri, { mimeType: 'image/jpeg' });
     } catch {
-      Alert.alert('Sharing is not available on this device');
+      Alert.alert('Unable to share this image');
     }
   };
 
