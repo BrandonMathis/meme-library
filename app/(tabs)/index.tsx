@@ -2,12 +2,12 @@ import { useState, useMemo, useCallback } from 'react';
 import { View, FlatList, Pressable, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 
-import { Text } from '@/components/ui/text';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Text } from '@/components/ui/Text';
+import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useMemeLibrary, type MemeEntry } from '@/context/meme-library';
-import MemeDetailModal from '@/components/meme-detail-modal';
+import MemeDetailModal from '@/components/MemeDetailModal';
 
 const NUM_COLUMNS = 2;
 const GAP = 8;

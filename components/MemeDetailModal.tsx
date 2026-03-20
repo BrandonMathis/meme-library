@@ -1,8 +1,8 @@
 import { Modal, View, Pressable, Alert, Platform, Share } from 'react-native';
 import { Image } from 'expo-image';
 
-import { Text } from '@/components/ui/text';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Text } from '@/components/ui/Text';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useMemeLibrary, type MemeEntry } from '@/context/meme-library';
 
 type Props = {
