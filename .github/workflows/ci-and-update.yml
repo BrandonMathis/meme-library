@@ -117,7 +117,7 @@ jobs:
 
             **Scan this QR code** to open the latest version on your device:
 
-            ![${{ steps.eas-update.outputs.branch }} QR code](${{ steps.qr.outputs.qr_url }})
+            <img src="${{ steps.qr.outputs.qr_url }}" alt="${{ steps.eas-update.outputs.branch }} QR code" width="250" />
 
             **Or open directly:**
             ```
