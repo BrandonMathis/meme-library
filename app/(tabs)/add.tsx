@@ -18,6 +18,8 @@ export default function AddScreen() {
   const imageSize = (width - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
   const flatListRef = useRef<FlatList>(null);
+  const hasScrolledRef = useRef(false);
+  const layoutHeightRef = useRef(0);
   const [photos, setPhotos] = useState<MediaLibrary.Asset[]>([]);
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>(
     'undetermined',
@@ -78,9 +80,16 @@ export default function AddScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: GAP, paddingBottom: bottom + 80 }}
         columnWrapperStyle={{ gap: GAP }}
-        onContentSizeChange={() => {
-          if (photos.length > 0) {
-            flatListRef.current?.scrollToEnd({ animated: false });
+        onLayout={(e) => {
+          layoutHeightRef.current = e.nativeEvent.layout.height;
+        }}
+        onContentSizeChange={(_w, contentHeight) => {
+          if (photos.length > 0 && !hasScrolledRef.current && layoutHeightRef.current > 0) {
+            const offset = contentHeight - layoutHeightRef.current;
+            if (offset > 0) {
+              hasScrolledRef.current = true;
+              flatListRef.current?.scrollToOffset({ offset, animated: false });
+            }
           }
         }}
         renderItem={({ item }) => (
