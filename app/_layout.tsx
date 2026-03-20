@@ -34,7 +34,6 @@ export default function RootLayout() {
       <ThemeProvider value={isDark ? DARK_THEME : LIGHT_THEME}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
           <Stack.Screen
             name="add-meme-modal"
             options={{
