@@ -42,6 +42,13 @@ export default function RootLayout() {
               title: 'Add Meme',
             }}
           />
+          <Stack.Screen
+            name="MemeDetailModal"
+            options={{
+              presentation: 'formSheet',
+              title: 'Meme Details',
+            }}
+          />
         </Stack>
         <StatusBar style="auto" />
         <SuccessAnimation />
