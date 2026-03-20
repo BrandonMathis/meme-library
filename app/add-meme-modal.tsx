@@ -38,31 +38,29 @@ export default function AddMemeModal() {
 
   return (
     <View className="flex-1 bg-background">
+      <View className="flex-row items-center justify-between p-4 pb-2">
+        <Button variant="ghost" onPress={() => router.back()}>
+          <Text>Cancel</Text>
+        </Button>
+        <Text variant="large">Add Meme</Text>
+        <Button variant="ghost" onPress={handleSave} disabled={tags.length === 0}>
+          <Text className={tags.length === 0 ? 'text-muted-foreground' : 'text-primary'}>Save</Text>
+        </Button>
+      </View>
+
       <KeyboardAvoidingView
-        className="flex-1 p-4"
+        className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View className="mb-4 flex-row items-center justify-between">
-          <Button variant="ghost" onPress={() => router.back()}>
-            <Text>Cancel</Text>
-          </Button>
-          <Text variant="large">Add Meme</Text>
-          <Button variant="ghost" onPress={handleSave} disabled={tags.length === 0}>
-            <Text className={tags.length === 0 ? 'text-muted-foreground' : 'text-primary'}>
-              Save
-            </Text>
-          </Button>
-        </View>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="px-4 pb-8">
+          {uri && (
+            <Image
+              source={{ uri }}
+              style={{ width: '100%', height: 300, borderRadius: 12 }}
+              contentFit="contain"
+            />
+          )}
 
-        {uri && (
-          <Image
-            source={{ uri }}
-            style={{ width: '100%', height: 250, borderRadius: 12 }}
-            contentFit="contain"
-          />
-        )}
-
-        <ScrollView keyboardShouldPersistTaps="handled" className="flex-grow-0">
           <View className="mt-4 flex-row gap-2">
             <View className="flex-1">
               <Input
