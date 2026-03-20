@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
+import { TagInput } from '@/components/tag-input';
 import { Text } from '@/components/ui/text';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useMemeLibrary } from '@/context/meme-library';
 
 export default function AddMemeModal() {
@@ -14,29 +13,19 @@ export default function AddMemeModal() {
   const router = useRouter();
   const { addMeme } = useMemeLibrary();
 
-  const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-
-  const handleAddTag = () => {
-    const trimmed = tagInput.trim().toLowerCase();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags((prev) => [...prev, trimmed]);
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tag: string) => {
-    setTags((prev) => prev.filter((t) => t !== tag));
-  };
-
   const [isSaving, setIsSaving] = useState(false);
 
+  const handleCancel = () => {
+    router.dismiss();
+  };
+
   const handleSave = async () => {
-    if (uri && tags.length > 0 && !isSaving) {
+    if (uri && !isSaving) {
       setIsSaving(true);
       try {
         await addMeme(uri, tags);
-        router.back();
+        router.dismiss();
       } finally {
         setIsSaving(false);
       }
@@ -44,59 +33,43 @@ export default function AddMemeModal() {
   };
 
   return (
-    <View className="flex-1 bg-background">
-      <View className="flex-row items-center justify-between p-4 pb-2">
-        <Button variant="ghost" onPress={() => router.back()}>
-          <Text>Cancel</Text>
-        </Button>
-        <Text variant="large">Add Meme</Text>
-        <Button variant="ghost" onPress={handleSave} disabled={tags.length === 0 || isSaving}>
-          <Text
-            className={tags.length === 0 || isSaving ? 'text-muted-foreground' : 'text-primary'}
-          >
-            {isSaving ? 'Saving...' : 'Save'}
-          </Text>
-        </Button>
-      </View>
+    <>
+      <Stack.Screen
+        options={{
+          headerLeft: () => (
+            <Button variant="ghost" onPress={handleCancel}>
+              <Text>Cancel</Text>
+            </Button>
+          ),
+          headerRight: () => (
+            <Button variant="ghost" onPress={handleSave} disabled={isSaving}>
+              <Text className={isSaving ? 'text-muted-foreground' : 'text-primary'}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Text>
+            </Button>
+          ),
+        }}
+      />
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <ScrollView
+        className="flex-1 bg-background"
+        keyboardShouldPersistTaps="handled"
+        contentContainerClassName="px-4 pb-8 pt-4"
       >
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="px-4 pb-8">
-          {uri && (
+        {uri && (
+          <View className="overflow-hidden rounded-xl" style={{ height: 320 }}>
             <Image
               source={{ uri }}
-              style={{ width: '100%', height: 300, borderRadius: 12 }}
+              style={{ width: '100%', height: '100%' }}
               contentFit="contain"
             />
-          )}
-
-          <View className="mt-4 flex-row gap-2">
-            <View className="flex-1">
-              <Input
-                placeholder="Add a tag..."
-                value={tagInput}
-                onChangeText={setTagInput}
-                onSubmitEditing={handleAddTag}
-                returnKeyType="done"
-                autoCapitalize="none"
-              />
-            </View>
-            <Button size="icon" onPress={handleAddTag}>
-              <Text className="text-lg font-bold text-primary-foreground">+</Text>
-            </Button>
           </View>
+        )}
 
-          <View className="mt-3 flex-row flex-wrap gap-2">
-            {tags.map((tag) => (
-              <Badge key={tag} onTouchEnd={() => handleRemoveTag(tag)}>
-                <Text className="text-xs text-primary-foreground">{tag} ✕</Text>
-              </Badge>
-            ))}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+        <View className="mt-4">
+          <TagInput tags={tags} onTagsChange={setTags} />
+        </View>
+      </ScrollView>
+    </>
   );
 }
