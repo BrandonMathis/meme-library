@@ -1,169 +1,247 @@
 # Meme Library Sync Strategy
 
+## Vision
+
+A local-first meme library app. Works fully offline with no accounts. Available on the App Store (iOS/macOS) and as a web app at a URL. Free tier is completely local. Optional paid "Pro" sync tier lets you keep your library in sync across devices — similar to how Excalidraw works (free local tool, paid Excalidraw+ for sync/collaboration).
+
+**Target platforms**: iOS, macOS, Web. Nothing else.
+
 ## Current State
 
-Before we can sync anything, it's worth noting: **the app has no persistence at all right now**. Memes live in React `useState` — close the app, everything's gone. Any sync strategy requires adding local persistence first (AsyncStorage, SQLite, or file-based). That's a prerequisite for all options below.
-
-**Data model** is simple: `{ id, uri, tags, createdAt, isFavorite }`. The actual image files are referenced by URI from the device's media library.
-
-**Target platforms**: iOS, macOS, Web (Chrome). That's it.
+The app has **no persistence** — everything is in-memory `useState`. Any strategy requires adding local storage first. Data model is simple: `{ id, uri, tags, createdAt, isFavorite }` plus image files.
 
 ---
 
-## Option A: iCloud + CloudKit (Apple-Native Sync)
+## The Product Model (Excalidraw-style)
 
-**How it works**: Use iCloud as the sync backbone. Store meme metadata in CloudKit (Apple's cloud database) and meme images in iCloud Drive. All Apple devices signed into the same iCloud account automatically stay in sync. For web, provide a read-only or limited-sync fallback via CloudKit JS (Apple's JavaScript SDK for CloudKit).
+### Free Tier (Local Only)
 
-**What syncs where**:
-- iOS ↔ macOS: Full automatic sync via CloudKit + iCloud Drive. This is how Apple Photos, Notes, etc. work.
-- Web: CloudKit JS provides a web API to read/write CloudKit data, but requires Apple ID sign-in in the browser.
+- App works 100% offline, no account, no sign-up
+- iOS: data in local app storage (SQLite or file-based)
+- macOS: same approach, local app storage
+- Web: data in IndexedDB + image blobs in IndexedDB or Origin Private File System
+- Each device is its own island — no sync, no network calls, fully private
+- Import/export your library as a zip file (manual "sync" escape hatch)
 
-**Pros**:
-- Zero infrastructure to manage — Apple hosts everything
-- Native, seamless sync between iOS and macOS (feels like magic)
-- No server costs for small-to-medium usage (free tier is generous)
-- Privacy-friendly — data stays in the user's iCloud account
-- Handles conflict resolution at the framework level
-- Offline-first by design — syncs when connectivity returns
+### Pro Tier (Sync)
 
-**Cons**:
-- Requires an Apple Developer account ($99/year)
-- Locks you into the Apple ecosystem (fine for now since we're only targeting Apple + web)
-- CloudKit JS for web requires users to sign in with their Apple ID — clunky UX
-- React Native doesn't have first-class CloudKit support — you'd need a native module (Swift bridge) or an existing community library like `react-native-cloud-store` for iCloud Drive
-- Image sync through iCloud Drive can be slow for large libraries
-- Web experience will always be second-class compared to native
-
-**Complexity**: Medium-High (native module bridging required)
+- Link your devices together — no account/email required
+- All your memes stay in sync across iOS, macOS, and web
+- Still local-first: everything works offline, sync happens when devices reconnect
 
 ---
 
-## Option B: Bonjour/mDNS Local Network Sync (AirDrop-style)
+## Sync Architecture Options for Pro Tier
 
-**How it works**: Devices discover each other on the same local Wi-Fi network using Bonjour (Apple's zero-config networking / mDNS). Once discovered, they establish a direct peer-to-peer connection and sync meme data + images over the local network. Think of it like AirDrop but for your meme library.
+### Option 1: CRDT + Relay Server (Recommended)
+
+**How it works**: Each device maintains its own local database as the source of truth. Changes are tracked using CRDTs (Conflict-free Replicated Data Types) — a data structure that can be merged from any direction without conflicts. A lightweight relay server passes encrypted updates between your devices. The server never sees your data — it just forwards opaque blobs.
+
+**Think of it like**: iMessage. Your devices talk to each other through Apple's servers, but Apple can't read your messages. Same idea — the relay passes data, but the content is encrypted and only your devices can read it.
+
+**How devices link (no accounts)**:
+
+1. Open the app on Device A, tap "Set up sync"
+2. App generates a **sync key** (a random 256-bit key displayed as a QR code + human-readable words like "tiger-castle-rainbow-seven")
+3. On Device B, tap "Join sync" and scan the QR code (or type the words)
+4. Both devices now share the same encryption key and sync group ID
+5. That's it. No email, no password, no account. The sync key IS your identity.
 
 **Architecture**:
-- Each device runs a lightweight HTTP server (or WebSocket server) when sync mode is active
-- Devices advertise themselves via Bonjour/mDNS
-- When two devices find each other, they compare libraries and exchange diffs
-- Images transfer directly device-to-device over LAN
 
-**What syncs where**:
-- iOS ↔ macOS: Bonjour discovery + direct transfer. Works great on the same network.
-- Web: The browser can connect to a discovered device's local server (e.g., `http://192.168.1.x:PORT`), but **browsers cannot advertise themselves via Bonjour**. The native app would need to act as the server, and the web app connects to it.
+```
+┌──────────┐     encrypted     ┌──────────────┐     encrypted     ┌──────────┐
+│  iPhone   │ ──── deltas ───→ │ Relay Server │ ──── deltas ───→ │   Mac    │
+│ (SQLite)  │ ←── deltas ──── │  (stateless)  │ ←── deltas ──── │ (SQLite) │
+└──────────┘                   └──────────────┘                   └──────────┘
+                                      ↕
+                                encrypted deltas
+                                      ↕
+                               ┌──────────┐
+                               │   Web    │
+                               │(IndexedDB)│
+                               └──────────┘
+```
+
+**CRDT library options**:
+
+- **Automerge** — mature, great docs, built for exactly this use case. Has a binary sync protocol that's bandwidth-efficient. Works in JS/TS (React Native + web).
+- **Yjs** — faster and lighter than Automerge, widely used (powers Notion's collab, Figma-like tools). Also JS/TS native.
+- **lo-fi / lofi** — newer library built specifically for local-first apps with sync. Worth evaluating.
+
+**Relay server**:
+
+- Extremely simple — receives encrypted byte arrays, stores them briefly, forwards to other devices in the sync group
+- Could be a single Cloudflare Worker, a tiny Fly.io app, or even a Supabase Realtime channel
+- Zero knowledge of the data (end-to-end encrypted)
+- Cheap to run — it's just passing messages, not processing them
+- For images: relay stores encrypted image blobs temporarily until all devices have pulled them, then deletes
 
 **Pros**:
-- Completely local — no cloud, no server, no internet required
-- Fast transfers (LAN speed, not limited by upload bandwidth)
-- Maximum privacy — data never leaves your network
-- No ongoing costs whatsoever
-- Cool factor — feels like AirDrop
+
+- No accounts, no passwords, no email — sync key is the identity
+- End-to-end encrypted — the server literally cannot read your memes
+- CRDTs handle conflict resolution automatically (two devices edit the same meme? both changes merge cleanly)
+- Works offline — changes queue up and sync when reconnected
+- Server is dirt cheap (stateless message relay)
+- All three platforms are first-class citizens
+- The Excalidraw model — users understand "free = local, pro = sync"
 
 **Cons**:
-- Only works when devices are on the same network (no sync from coffee shop to home)
-- Requires a native module for Bonjour/mDNS on iOS (`react-native-zeroconf` or similar)
-- Web browsers are limited — can't do mDNS discovery, so the web app needs the native app's IP/port manually or via QR code
-- Conflict resolution is entirely on you to build
-- Need to handle the embedded HTTP/WebSocket server (e.g., `react-native-http-bridge` or similar)
-- Both devices must be open and active simultaneously to sync
-- No background sync — the app must be in the foreground (iOS restriction)
 
-**Complexity**: High (networking, discovery, server, conflict resolution all from scratch)
+- CRDTs add library weight (~50-100KB for Automerge/Yjs)
+- Image sync is the hard part — CRDT handles metadata easily, but syncing actual image files needs a blob storage/transfer layer on top
+- Relay server is simple but still needs to exist and be maintained
+- Sync key UX needs to be bulletproof — if you lose it, you lose sync (could offer key backup to iCloud Keychain)
+- CRDT learning curve for the dev team
+
+**Complexity**: Medium
+**Cost**: Very low ($5-20/mo for relay server at small scale, scales linearly)
 
 ---
 
-## Option C: Shared Folder Sync (iCloud Drive / File-Based)
+### Option 2: CloudKit as the Relay (Apple-Native)
 
-**How it works**: Instead of a database sync protocol, simply store the entire meme library as files in a shared folder on iCloud Drive (or any synced folder). The library is a JSON file for metadata + image files in a subfolder. iCloud Drive handles syncing the folder across devices automatically.
+**How it works**: Same local-first CRDT architecture, but instead of running your own relay server, use Apple's CloudKit as the transport layer. Devices signed into the same iCloud account automatically share a CloudKit container. Sync happens through CloudKit push notifications and shared records.
+
+**How devices link**: They don't need to — if you're signed into the same iCloud account on all your Apple devices, CloudKit handles discovery automatically. For web, CloudKit JS requires an Apple ID sign-in.
 
 **Architecture**:
-- `MemeLibrary/library.json` — contains all meme metadata
-- `MemeLibrary/images/` — contains all meme image files (copied from media library)
-- This folder lives in iCloud Drive, which syncs automatically across Apple devices
-- On web, access via iCloud Drive web or CloudKit JS
 
-**What syncs where**:
-- iOS ↔ macOS: Automatic via iCloud Drive folder sync. Both read/write the same files.
-- Web: Could access via iCloud.com Drive, but programmatic access from a web app is limited. CloudKit JS could work as a bridge.
+```
+┌──────────┐                  ┌──────────────┐                  ┌──────────┐
+│  iPhone   │ ─── CRDT ────→ │   CloudKit    │ ─── CRDT ────→ │   Mac    │
+│ (SQLite)  │ ←── sync ──── │  (Apple)      │ ←── sync ──── │ (SQLite) │
+└──────────┘                  └──────────────┘                  └──────────┘
+                                      ↕
+                               CloudKit JS
+                                      ↕
+                               ┌──────────┐
+                               │   Web    │
+                               │(IndexedDB)│
+                               └──────────┘
+```
 
 **Pros**:
-- Conceptually very simple — it's just files in a folder
-- iCloud Drive handles all the sync mechanics
-- Works offline — edit locally, syncs when connected
-- No server, no API, minimal infrastructure
-- Easy to debug — you can literally open the JSON file and look at it
-- Could work with other folder-sync services (Dropbox, etc.) in the future
+
+- No relay server to build or maintain — Apple runs it
+- Free tier is generous (10GB asset storage, 100MB database, per user)
+- Native iOS/macOS integration is seamless
+- Push notifications for real-time sync are built-in
+- Users don't need to set up anything — iCloud "just works"
+- Apple handles image storage too (CKAsset)
 
 **Cons**:
-- Conflict resolution for the JSON file is a real problem — if two devices edit simultaneously, one wins and one loses (last-write-wins). Could mitigate by using one-file-per-meme instead of a single JSON.
-- Requires copying images out of the media library into the shared folder (duplicating storage)
-- iCloud Drive file access from React Native requires native bridging (`react-native-cloud-store`)
-- Web access to iCloud Drive is very limited programmatically
-- File-based sync is not real-time — iCloud Drive syncs on its own schedule
-- Large image libraries will eat up iCloud storage quota
 
-**Complexity**: Low-Medium (simple concept, but native bridging still needed for iCloud Drive access)
+- Requires Apple Developer account ($99/year)
+- Web is second-class — users must sign in with Apple ID in the browser
+- You're locked into Apple's infrastructure
+- React Native ↔ CloudKit bridging requires native modules
+- No encryption by default (Apple can see the data), though you could encrypt before storing
+- Harder to offer on non-Apple platforms later if you expand
+- Not truly "no account" — it uses the user's iCloud account implicitly
+
+**Complexity**: Medium-High (native bridging)
+**Cost**: $99/yr Apple Developer + iCloud storage (free for most users)
 
 ---
 
-## Option D: Self-Hosted Lightweight Server on Your Mac
+### Option 3: WebRTC Peer-to-Peer (Serverless Sync)
 
-**How it works**: Run a small sync server on your Mac (could be a simple Node.js/Express or Go server, or even a SQLite-backed service). All devices point to this server over your local network. The Mac is the "source of truth." The server could also be exposed via Tailscale or similar for sync outside the home network.
+**How it works**: Devices connect directly to each other using WebRTC — the same technology that powers video calls in the browser. A tiny signaling server helps devices find each other initially, then they communicate peer-to-peer. No data ever passes through a server.
+
+**How devices link**:
+
+1. Device A creates a "sync room" and gets a room code
+2. Device B enters the room code
+3. The signaling server introduces them, then gets out of the way
+4. All subsequent sync is direct, device-to-device
 
 **Architecture**:
-- Mac runs a lightweight sync server (e.g., Node + SQLite + image storage)
-- iOS app and web app connect to `http://<mac-ip>:PORT` or a Tailscale address
-- REST API or WebSocket for real-time sync
-- Server stores all meme metadata + images
 
-**What syncs where**:
-- iOS ↔ Mac ↔ Web: All sync through the central server. Works on the same network by default, or anywhere via Tailscale/Cloudflare Tunnel.
-- Optionally, the Mac app could just BE the server (Electron/Tauri app that also serves the API)
+```
+┌──────────┐                                          ┌──────────┐
+│  iPhone   │ ◄════════ WebRTC P2P ════════════════► │   Mac    │
+│ (SQLite)  │                                          │ (SQLite) │
+└──────────┘                                          └──────────┘
+      ▲                                                      ▲
+      ║                    WebRTC P2P                        ║
+      ╚═══════════════════════╦══════════════════════════════╝
+                              ▼
+                       ┌──────────┐
+                       │   Web    │
+                       │(IndexedDB)│
+                       └──────────┘
+
+      Signaling server only used for initial connection setup
+```
 
 **Pros**:
-- Full control over sync logic
-- Works identically across all three platforms (iOS, web, macOS) — no second-class citizens
-- Can extend to work outside local network via Tailscale (still "no cloud" in the traditional sense)
-- Simple REST API — easy to build and debug
-- Real-time sync possible via WebSockets
-- No Apple Developer account required
+
+- Truly serverless for data transfer — devices talk directly
+- Maximum privacy — data never touches a server
+- Free (signaling server is trivial, could even use a free TURN service)
+- WebRTC is supported on iOS (react-native-webrtc), macOS, and all browsers
+- Low latency when devices are on the same network (uses LAN automatically)
+- Can combine with CRDTs for robust conflict resolution
 
 **Cons**:
-- You have to run and maintain a server process on your Mac
-- If the Mac is off or the server isn't running, no sync
-- Need to handle the server lifecycle (auto-start, crash recovery)
-- Building a proper sync protocol with conflict resolution is non-trivial
-- Security considerations — exposing a server on your network
-- More moving parts than a pure-local solution
 
-**Complexity**: Medium (server is simple, but it's another thing to maintain)
+- **Both devices must be online simultaneously** — this is the dealbreaker. If your phone syncs a meme while your Mac is asleep, the Mac doesn't get it until both are open at the same time
+- WebRTC on React Native (`react-native-webrtc`) is a heavy dependency with native code
+- NAT traversal can fail — some networks block P2P (needs TURN fallback, which means a server anyway)
+- Connection setup is flaky compared to a relay (WebRTC negotiation has many failure modes)
+- Syncing a large library on first connect could be slow
+- No offline queuing without a relay buffer
+
+**Complexity**: High
+**Cost**: Near-zero (signaling is cheap, but TURN server needed as fallback adds cost)
 
 ---
 
 ## Comparison Matrix
 
-| Criteria                    | A: iCloud/CloudKit | B: Bonjour/LAN | C: Shared Folder | D: Self-Hosted Server |
-|-----------------------------|-------------------|-----------------|-------------------|-----------------------|
-| **No internet required**    | No                | Yes             | No (for sync)     | Yes (LAN) / No (Tailscale) |
-| **No server to maintain**   | Yes               | Yes             | Yes               | No                    |
-| **Web support quality**     | Okay (Apple ID)   | Limited         | Poor              | Excellent             |
-| **Real-time sync**          | Near-real-time    | Yes (when open) | No                | Yes                   |
-| **Background sync (iOS)**   | Yes               | No              | Yes               | Limited               |
-| **Conflict resolution**     | Built-in          | DIY             | DIY               | DIY                   |
-| **Privacy**                 | Good (iCloud)     | Excellent       | Good (iCloud)     | Excellent             |
-| **Implementation effort**   | Medium-High       | High            | Low-Medium        | Medium                |
-| **Works across networks**   | Yes               | No              | Yes               | With Tailscale        |
-| **Apple ecosystem lock-in** | Yes               | No              | Partial           | No                    |
-| **Ongoing costs**           | $99/yr dev acct   | None            | iCloud storage    | None                  |
+| Criteria                       | 1: CRDT + Relay  | 2: CloudKit     | 3: WebRTC P2P    |
+| ------------------------------ | ---------------- | --------------- | ---------------- |
+| **No account required**        | Yes (sync key)   | No (iCloud)     | Yes (room code)  |
+| **Web is first-class**         | Yes              | No              | Yes              |
+| **Works when devices offline** | Yes (queues)     | Yes             | No (both online) |
+| **Server cost**                | $5-20/mo         | $99/yr          | ~Free            |
+| **Privacy**                    | E2E encrypted    | Apple sees data | Maximum (P2P)    |
+| **Image sync**                 | Via relay        | CKAsset         | Direct P2P       |
+| **Conflict resolution**        | CRDT (automatic) | CRDT or manual  | CRDT             |
+| **Implementation effort**      | Medium           | Medium-High     | High             |
+| **Scales to many users**       | Yes              | Yes             | Poorly           |
+| **Future Android/Windows**     | Easy to add      | Very hard       | Easy to add      |
+| **Monetizable as Pro feature** | Yes (relay cost) | Awkward         | Hard (no cost)   |
 
 ---
 
-## My Recommendation
+## Recommendation
 
-**For your specific needs (iOS + macOS + Web, local-first, same user across devices):**
+**Option 1: CRDT + Relay Server** is the clear winner for this product vision.
 
-**Start with Option C (Shared Folder)** as the simplest path to get sync working between iOS and macOS. Use a one-file-per-meme approach (each meme is a JSON file + its image) to avoid JSON merge conflicts. This gets you 80% of the way with 20% of the effort.
+Here's why:
 
-**Then layer on Option D (Self-Hosted Server)** for web support, since web has the weakest iCloud Drive integration. A tiny server on the Mac could watch the same iCloud Drive folder and serve it to the web app via a REST API — giving you the best of both worlds.
+1. **No accounts** — the sync key model is elegant and users understand it (Signal does the same thing for linked devices)
+2. **Web is first-class** — no Apple ID sign-in, no second-class experience
+3. **It's monetizable** — the relay server costs you money to run, which directly justifies a Pro tier. WebRTC is free so there's no natural paywall. CloudKit is tied to Apple so it feels weird to charge for.
+4. **E2E encryption** — strong privacy story, which matters for a "local-first" brand
+5. **CRDTs eliminate conflict headaches** — two devices edit the same meme's tags simultaneously? Both changes merge. No "last write wins" surprises.
+6. **Future-proof** — if you ever want Android or Windows, nothing about this architecture is Apple-specific
 
-But if **web is a first-class priority equal to iOS/macOS**, skip straight to **Option D** and build a lightweight local server. It's the only option that treats all three platforms equally.
+**Suggested tech stack for sync**:
+
+- **Local DB**: SQLite via `expo-sqlite` (iOS/macOS) + IndexedDB (web)
+- **CRDT**: Automerge or Yjs for metadata sync
+- **Relay**: Cloudflare Workers + Durable Objects (cheap, global, low-latency) or a simple WebSocket server on Fly.io
+- **Image transfer**: Presigned URLs to R2/S3-compatible storage (encrypted blobs), or chunked transfer through the relay
+- **Encryption**: libsodium (tweetnacl-js) for E2E encryption using the shared sync key
+
+**Implementation phases**:
+
+1. **Phase 1**: Add local persistence (SQLite + IndexedDB). App survives restarts.
+2. **Phase 2**: Add CRDT layer on top of local storage. Changes tracked as CRDT operations.
+3. **Phase 3**: Build relay server + device linking (sync key / QR code).
+4. **Phase 4**: Image sync pipeline (encrypted blob upload/download).
+5. **Phase 5**: Pro tier gating — free users get local-only, Pro users get sync.
