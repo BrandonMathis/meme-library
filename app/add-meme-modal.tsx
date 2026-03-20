@@ -36,12 +36,9 @@ export default function AddMemeModal() {
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="px-4 pb-8">
         {uri && (
-          <Image
-            source={{ uri }}
-            className="w-full rounded-xl"
-            style={{ aspectRatio: 1, maxHeight: 320 }}
-            contentFit="contain"
-          />
+          <View className="h-80 overflow-hidden rounded-xl">
+            <Image source={{ uri }} className="h-full w-full" contentFit="contain" />
+          </View>
         )}
 
         <View className="mt-4">
