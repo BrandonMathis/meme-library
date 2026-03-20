@@ -1,5 +1,13 @@
-import { useEffect } from 'react';
-import { Modal, View, Pressable, Alert, Platform, useWindowDimensions } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  Modal,
+  View,
+  Pressable,
+  Alert,
+  Platform,
+  useWindowDimensions,
+  KeyboardAvoidingView,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -12,7 +20,9 @@ import * as Sharing from 'expo-sharing';
 import { Paths, File } from 'expo-file-system';
 
 import { Text } from '@/components/ui/Text';
+import { Badge } from '@/components/ui/Badge';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { TagInput } from '@/components/TagInput';
 import { useMemeLibrary, type MemeEntry } from '@/context/MemeLibrary';
 
 type Props = {
@@ -24,8 +34,9 @@ const DISMISS_THRESHOLD = 80;
 const DISMISS_VELOCITY = 500;
 
 export default function MemeDetailsModal({ meme, onClose }: Props) {
-  const { deleteMeme, toggleFavorite } = useMemeLibrary();
+  const { deleteMeme, toggleFavorite, editTags } = useMemeLibrary();
   const { height: screenHeight } = useWindowDimensions();
+  const [isEditingTags, setIsEditingTags] = useState(false);
 
   const translateY = useSharedValue(screenHeight);
   const backdropOpacity = useSharedValue(0);
@@ -41,10 +52,17 @@ export default function MemeDetailsModal({ meme, onClose }: Props) {
   }, [meme, screenHeight, translateY, backdropOpacity]);
 
   const dismiss = () => {
+    setIsEditingTags(false);
     translateY.value = withTiming(screenHeight, { duration: 250 }, () => {
       runOnJS(onClose)();
     });
     backdropOpacity.value = withTiming(0, { duration: 250 });
+  };
+
+  const handleTagsChange = async (newTags: string[]) => {
+    if (meme) {
+      await editTags(meme.id, newTags);
+    }
   };
 
   const panGesture = Gesture.Pan()
@@ -174,38 +192,71 @@ export default function MemeDetailsModal({ meme, onClose }: Props) {
               />
             </View>
 
-            {/* Action buttons */}
-            <View className="flex-row items-center justify-evenly pb-10 pt-4">
-              <Pressable
-                onPress={handleShare}
-                className="items-center gap-1 rounded-xl px-5 py-3 active:bg-white/10"
-              >
-                <IconSymbol name="square.and.arrow.up" size={24} color="#3b82f6" />
-                <Text className="text-xs text-white/70">Share</Text>
-              </Pressable>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+              {/* Tags section */}
+              <View className="px-4 pt-2">
+                {isEditingTags ? (
+                  <View className="gap-2">
+                    <View className="flex-row items-center justify-between">
+                      <Text className="text-sm font-medium text-white/70">Edit Tags</Text>
+                      <Pressable onPress={() => setIsEditingTags(false)}>
+                        <Text className="text-sm text-blue-400">Done</Text>
+                      </Pressable>
+                    </View>
+                    <TagInput tags={meme.tags} onTagsChange={handleTagsChange} />
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => setIsEditingTags(true)}
+                    className="flex-row flex-wrap items-center gap-1.5"
+                  >
+                    {meme.tags.length > 0 ? (
+                      meme.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="px-2 py-0.5">
+                          <Text className="text-xs">{tag}</Text>
+                        </Badge>
+                      ))
+                    ) : (
+                      <Text className="text-sm text-white/40">No tags</Text>
+                    )}
+                    <IconSymbol name="pencil" size={14} color="rgba(255,255,255,0.4)" />
+                  </Pressable>
+                )}
+              </View>
 
-              <Pressable
-                onPress={handleFavorite}
-                className="items-center gap-1 rounded-xl px-5 py-3 active:bg-white/10"
-              >
-                <IconSymbol
-                  name={meme.isFavorite ? 'heart.fill' : 'heart'}
-                  size={24}
-                  color={meme.isFavorite ? '#ef4444' : '#f97316'}
-                />
-                <Text className="text-xs text-white/70">
-                  {meme.isFavorite ? 'Unfavorite' : 'Favorite'}
-                </Text>
-              </Pressable>
+              {/* Action buttons */}
+              <View className="flex-row items-center justify-evenly pb-10 pt-4">
+                <Pressable
+                  onPress={handleShare}
+                  className="items-center gap-1 rounded-xl px-5 py-3 active:bg-white/10"
+                >
+                  <IconSymbol name="square.and.arrow.up" size={24} color="#3b82f6" />
+                  <Text className="text-xs text-white/70">Share</Text>
+                </Pressable>
 
-              <Pressable
-                onPress={handleDelete}
-                className="items-center gap-1 rounded-xl px-5 py-3 active:bg-white/10"
-              >
-                <IconSymbol name="trash.fill" size={24} color="#ef4444" />
-                <Text className="text-xs text-white/70">Delete</Text>
-              </Pressable>
-            </View>
+                <Pressable
+                  onPress={handleFavorite}
+                  className="items-center gap-1 rounded-xl px-5 py-3 active:bg-white/10"
+                >
+                  <IconSymbol
+                    name={meme.isFavorite ? 'heart.fill' : 'heart'}
+                    size={24}
+                    color={meme.isFavorite ? '#ef4444' : '#f97316'}
+                  />
+                  <Text className="text-xs text-white/70">
+                    {meme.isFavorite ? 'Unfavorite' : 'Favorite'}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleDelete}
+                  className="items-center gap-1 rounded-xl px-5 py-3 active:bg-white/10"
+                >
+                  <IconSymbol name="trash.fill" size={24} color="#ef4444" />
+                  <Text className="text-xs text-white/70">Delete</Text>
+                </Pressable>
+              </View>
+            </KeyboardAvoidingView>
           </View>
         </Animated.View>
       </GestureDetector>
