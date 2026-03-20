@@ -9,6 +9,7 @@ import { PortalHost } from '@rn-primitives/portal';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MemeLibraryProvider } from '@/context/MemeLibrary';
+import { ThemePreferenceProvider } from '@/context/ThemeProvider';
 import { NAV_THEME } from '@/lib/constants';
 
 const LIGHT_THEME: Theme = {
@@ -30,21 +31,23 @@ export default function RootLayout() {
   const isDark = colorScheme === 'dark';
 
   return (
-    <MemeLibraryProvider>
-      <ThemeProvider value={isDark ? DARK_THEME : LIGHT_THEME}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="AddMemeModal"
-            options={{
-              presentation: 'formSheet',
-              title: 'Add Meme',
-            }}
-          />
-        </Stack>
-        <StatusBar style="auto" />
-        <PortalHost />
-      </ThemeProvider>
-    </MemeLibraryProvider>
+    <ThemePreferenceProvider>
+      <MemeLibraryProvider>
+        <ThemeProvider value={isDark ? DARK_THEME : LIGHT_THEME}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="AddMemeModal"
+              options={{
+                presentation: 'formSheet',
+                title: 'Add Meme',
+              }}
+            />
+          </Stack>
+          <StatusBar style="auto" />
+          <PortalHost />
+        </ThemeProvider>
+      </MemeLibraryProvider>
+    </ThemePreferenceProvider>
   );
 }
