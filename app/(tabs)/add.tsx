@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
@@ -13,6 +14,7 @@ const GAP = 2;
 export default function AddScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { bottom } = useSafeAreaInsets();
   const imageSize = (width - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
   const [photos, setPhotos] = useState<MediaLibrary.Asset[]>([]);
@@ -72,7 +74,7 @@ export default function AddScreen() {
         data={photos}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ gap: GAP }}
+        contentContainerStyle={{ gap: GAP, paddingBottom: bottom + 80 }}
         columnWrapperStyle={{ gap: GAP }}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handlePhotoPress(item)} activeOpacity={0.7}>
