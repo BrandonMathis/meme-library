@@ -40,8 +40,6 @@ export default function RootLayout() {
             options={{
               presentation: 'formSheet',
               title: 'Add Meme',
-              headerShown: false,
-              animation: 'slide_from_bottom',
             }}
           />
         </Stack>
