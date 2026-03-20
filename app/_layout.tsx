@@ -8,7 +8,7 @@ import 'react-native-reanimated';
 import { PortalHost } from '@rn-primitives/portal';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { MemeLibraryProvider } from '@/context/meme-library';
+import { MemeLibraryProvider } from '@/context/MemeLibrary';
 import { NAV_THEME } from '@/lib/constants';
 
 const LIGHT_THEME: Theme = {
@@ -35,12 +35,10 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen
-            name="add-meme-modal"
+            name="AddMemeModal"
             options={{
               presentation: 'formSheet',
               title: 'Add Meme',
-              headerShown: false,
-              animation: 'slide_from_bottom',
             }}
           />
         </Stack>

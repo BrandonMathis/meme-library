@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 
-import { Text } from '@/components/ui/text';
+import { Text } from '@/components/ui/Text';
 
 const NUM_COLUMNS = 3;
 const NUM_PHOTOS = 50;
@@ -41,7 +41,7 @@ export default function AddScreen() {
   }, []);
 
   const handlePhotoPress = (asset: MediaLibrary.Asset) => {
-    router.push({ pathname: '/add-meme-modal', params: { uri: asset.uri } });
+    router.push({ pathname: '/AddMemeModal', params: { uri: asset.uri } });
   };
 
   if (permissionStatus === 'undetermined') {
@@ -78,9 +78,9 @@ export default function AddScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: GAP, paddingBottom: bottom + 80 }}
         columnWrapperStyle={{ gap: GAP }}
-        onContentSizeChange={() => {
+        onContentSizeChange={(_, contentHeight) => {
           if (photos.length > 0) {
-            flatListRef.current?.scrollToEnd({ animated: false });
+            flatListRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
           }
         }}
         renderItem={({ item }) => (
