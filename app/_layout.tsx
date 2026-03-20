@@ -9,6 +9,7 @@ import { PortalHost } from '@rn-primitives/portal';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MemeLibraryProvider } from '@/context/MemeLibrary';
+import { ThemeProvider as AppThemeProvider } from '@/context/ThemeProvider';
 import { SuccessAnimation } from '@/components/SuccessAnimation';
 import { NAV_THEME } from '@/lib/constants';
 
@@ -26,7 +27,7 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-export default function RootLayout() {
+function RootLayoutInner() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -55,5 +56,13 @@ export default function RootLayout() {
         <PortalHost />
       </ThemeProvider>
     </MemeLibraryProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AppThemeProvider>
+      <RootLayoutInner />
+    </AppThemeProvider>
   );
 }

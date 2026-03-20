@@ -15,11 +15,14 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Separator } from '@/components/ui/Separator';
+import { Switch } from '@/components/ui/Switch';
 import { Text } from '@/components/ui/Text';
 import { useMemeLibrary } from '@/context/MemeLibrary';
+import { useTheme } from '@/context/ThemeProvider';
 
 export default function SettingsScreen() {
   const { memes, destroyAll, exportData } = useMemeLibrary();
+  const { themeMode, setThemeMode, isDark } = useTheme();
   const [isExporting, setIsExporting] = useState(false);
   const [isDestroying, setIsDestroying] = useState(false);
 
@@ -74,6 +77,46 @@ export default function SettingsScreen() {
           <View className="flex-row items-center justify-between">
             <Text className="text-muted-foreground">Unique tags</Text>
             <Text className="font-semibold">{totalTags}</Text>
+          </View>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Customize how the app looks</CardDescription>
+        </CardHeader>
+        <CardContent className="gap-3">
+          <View className="flex-row items-center justify-between">
+            <View className="shrink gap-0.5">
+              <Text className="font-medium">Dark Mode</Text>
+              <Text variant="small" className="text-muted-foreground">
+                {themeMode === 'system'
+                  ? 'Following system theme'
+                  : isDark
+                    ? 'Dark theme active'
+                    : 'Light theme active'}
+              </Text>
+            </View>
+            <Switch
+              checked={isDark}
+              onCheckedChange={(checked) => setThemeMode(checked ? 'dark' : 'light')}
+            />
+          </View>
+          <Separator />
+          <View className="flex-row items-center justify-between">
+            <View className="shrink gap-0.5">
+              <Text className="font-medium">Use System Theme</Text>
+              <Text variant="small" className="text-muted-foreground">
+                Match your device&apos;s appearance setting
+              </Text>
+            </View>
+            <Switch
+              checked={themeMode === 'system'}
+              onCheckedChange={(checked) =>
+                setThemeMode(checked ? 'system' : isDark ? 'dark' : 'light')
+              }
+            />
           </View>
         </CardContent>
       </Card>
