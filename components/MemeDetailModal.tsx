@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 
 import { Text } from '@/components/ui/Text';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useMemeLibrary, type MemeEntry } from '@/context/meme-library';
+import { useMemeLibrary, type MemeEntry } from '@/context/MemeLibrary';
 
 type Props = {
   meme: MemeEntry | null;

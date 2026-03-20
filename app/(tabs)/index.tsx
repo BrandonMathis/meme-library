@@ -6,7 +6,7 @@ import { Text } from '@/components/ui/Text';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useMemeLibrary, type MemeEntry } from '@/context/meme-library';
+import { useMemeLibrary, type MemeEntry } from '@/context/MemeLibrary';
 import MemeDetailModal from '@/components/MemeDetailModal';
 
 const NUM_COLUMNS = 2;
