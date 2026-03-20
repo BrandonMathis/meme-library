@@ -119,9 +119,9 @@ jobs:
 
             **Scan this QR code** to open the latest version on your device:
 
-            <a href="${{ steps.qr.outputs.expo_go_url }}"><img src="${{ steps.qr.outputs.qr_url }}" alt="${{ steps.eas-update.outputs.branch }} QR code" width="250" /></a>
+            <a href="${{ steps.qr.outputs.qr_url }}"><img src="${{ steps.qr.outputs.qr_url }}" alt="${{ steps.eas-update.outputs.branch }} QR code" width="250" /></a>
 
-            **Or open directly:** [Open in Expo Go](${{ steps.qr.outputs.expo_go_url }})
+            **Or open directly:** [Open in Expo Go](${{ steps.qr.outputs.qr_url }})
 
             > Update branch: `${{ steps.eas-update.outputs.branch }}`
             > Updated on: ${{ github.event.pull_request.head.sha }}
