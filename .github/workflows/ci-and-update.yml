@@ -35,7 +35,6 @@ jobs:
         run: npm run typecheck
 
       - name: Expo Doctor
-        continue-on-error: true
         run: npx expo-doctor
 
   security-audit:
