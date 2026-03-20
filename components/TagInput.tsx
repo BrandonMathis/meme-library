@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View } from 'react-native';
+import { useRef, useState } from 'react';
+import { TextInput, View } from 'react-native';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -20,12 +20,16 @@ export function TagInput({
   showTags = true,
 }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<TextInput>(null);
 
   const handleAddTag = () => {
     const trimmed = inputValue.trim().toLowerCase();
     if (trimmed && !tags.includes(trimmed)) {
       onTagsChange([...tags, trimmed]);
       setInputValue('');
+      // Imperatively clear the native input to handle cases where
+      // selected text causes the controlled value to not update properly
+      inputRef.current?.clear();
     }
   };
 
@@ -38,6 +42,7 @@ export function TagInput({
       <View className="flex-row gap-2">
         <View className="flex-1">
           <Input
+            ref={inputRef}
             placeholder={placeholder}
             value={inputValue}
             onChangeText={setInputValue}
