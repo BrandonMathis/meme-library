@@ -4,13 +4,13 @@ export default function TabLayout() {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: 'house', selected: 'house.fill' }} md="home" />
+        <Icon sf={{ default: 'house', selected: 'house.fill' }} drawable="home" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="add">
-        <Icon sf={{ default: 'plus.circle', selected: 'plus.circle.fill' }} md="add_circle" />
+        <Icon sf={{ default: 'plus.circle', selected: 'plus.circle.fill' }} drawable="add_circle" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
-        <Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} md="settings" />
+        <Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} drawable="settings" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );
