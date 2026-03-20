@@ -20,6 +20,13 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'plus.circle.fill': 'add-circle',
   'gearshape.fill': 'settings',
+  'square.and.arrow.up': 'share',
+  'heart.fill': 'favorite',
+  heart: 'favorite-border',
+  'trash.fill': 'delete',
+  xmark: 'close',
+  magnifyingglass: 'search',
+  'checkmark.circle.fill': 'check-circle',
 } as IconMapping;
 
 /**
