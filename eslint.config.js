@@ -11,7 +11,12 @@ module.exports = defineConfig([
   },
   {
     settings: {
-      'import/ignore': ['class-variance-authority', 'react-native'],
+      'import/ignore': [
+        'class-variance-authority',
+        'react-native',
+        '@rn-primitives/alert-dialog',
+        '@rn-primitives/separator',
+      ],
     },
   },
 ]);
