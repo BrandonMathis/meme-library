@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -62,29 +62,31 @@ export default function AddMemeModal() {
           />
         )}
 
-        <View className="mt-4 flex-row gap-2">
-          <View className="flex-1">
-            <Input
-              placeholder="Add a tag..."
-              value={tagInput}
-              onChangeText={setTagInput}
-              onSubmitEditing={handleAddTag}
-              returnKeyType="done"
-              autoCapitalize="none"
-            />
+        <ScrollView keyboardShouldPersistTaps="handled" className="flex-grow-0">
+          <View className="mt-4 flex-row gap-2">
+            <View className="flex-1">
+              <Input
+                placeholder="Add a tag..."
+                value={tagInput}
+                onChangeText={setTagInput}
+                onSubmitEditing={handleAddTag}
+                returnKeyType="done"
+                autoCapitalize="none"
+              />
+            </View>
+            <Button size="icon" onPress={handleAddTag}>
+              <Text className="text-lg font-bold text-primary-foreground">+</Text>
+            </Button>
           </View>
-          <Button size="icon" onPress={handleAddTag}>
-            <Text className="text-lg font-bold text-primary-foreground">+</Text>
-          </Button>
-        </View>
 
-        <View className="mt-3 flex-row flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Badge key={tag} onTouchEnd={() => handleRemoveTag(tag)}>
-              <Text className="text-xs text-primary-foreground">{tag} ✕</Text>
-            </Badge>
-          ))}
-        </View>
+          <View className="mt-3 flex-row flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Badge key={tag} onTouchEnd={() => handleRemoveTag(tag)}>
+                <Text className="text-xs text-primary-foreground">{tag} ✕</Text>
+              </Badge>
+            ))}
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
