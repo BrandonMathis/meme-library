@@ -7,9 +7,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Library',
+          title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="images-outline" size={size} color={color} />
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
@@ -18,7 +18,7 @@ export default function TabLayout() {
         options={{
           title: 'Add',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle-outline" size={size} color={color} />
+            <Ionicons name="add" size={size} color={color} />
           ),
         }}
       />
@@ -27,7 +27,7 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
+            <Ionicons name="settings-sharp" size={size} color={color} />
           ),
         }}
       />
