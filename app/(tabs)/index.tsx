@@ -1,13 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
 import { View, FlatList, Pressable, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/ui/Text';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useMemeLibrary, type MemeEntry } from '@/context/MemeLibrary';
-import MemeDetailsModal from '@/components/MemeDetailModal';
 
 const NUM_COLUMNS = 2;
 const GAP = 8;
@@ -15,11 +15,8 @@ const GAP = 8;
 export default function MemeLibraryScreen() {
   const { memes } = useMemeLibrary();
   const [search, setSearch] = useState('');
-  const [selectedMemeId, setSelectedMemeId] = useState<string | null>(null);
+  const router = useRouter();
   const { width } = useWindowDimensions();
-
-  // Look up selected meme from context so it stays in sync with edits
-  const selectedMeme = selectedMemeId ? (memes.find((m) => m.id === selectedMemeId) ?? null) : null;
 
   const itemSize = (width - GAP * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
 
@@ -32,7 +29,7 @@ export default function MemeLibraryScreen() {
   const renderItem = useCallback(
     ({ item }: { item: MemeEntry }) => (
       <Pressable
-        onPress={() => setSelectedMemeId(item.id)}
+        onPress={() => router.push({ pathname: '/MemeDetailModal', params: { id: item.id } })}
         className="active:opacity-80"
         style={{ width: itemSize, margin: GAP / 2 }}
       >
@@ -52,7 +49,7 @@ export default function MemeLibraryScreen() {
         )}
       </Pressable>
     ),
-    [itemSize],
+    [itemSize, router],
   );
 
   return (
@@ -94,8 +91,6 @@ export default function MemeLibraryScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
-
-      <MemeDetailsModal meme={selectedMeme} onClose={() => setSelectedMemeId(null)} />
     </View>
   );
 }

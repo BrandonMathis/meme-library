@@ -4,17 +4,40 @@ import { Platform, Alert } from 'react-native';
 
 const mockDeleteMeme = jest.fn();
 const mockToggleFavorite = jest.fn();
+const mockEditTags = jest.fn();
+const mockDismiss = jest.fn();
+
+let mockMemes: Array<Record<string, unknown>> = [];
 
 jest.mock('@/context/MemeLibrary', () => ({
   useMemeLibrary: () => ({
     deleteMeme: mockDeleteMeme,
     toggleFavorite: mockToggleFavorite,
-    memes: [],
+    editTags: mockEditTags,
+    get memes() {
+      return mockMemes;
+    },
     isLoading: false,
   }),
 }));
 
-import MemeDetailsModal from '@/components/MemeDetailModal';
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    dismiss: mockDismiss,
+    back: jest.fn(),
+    replace: jest.fn(),
+  }),
+  useLocalSearchParams: () => ({ id: '1' }),
+  Stack: {
+    Screen: ({ options }: { options: Record<string, unknown> }) => {
+      const { View } = require('react-native');
+      return <View testID="stack-screen" />;
+    },
+  },
+}));
+
+import MemeDetailModal from '@/app/MemeDetailModal';
 import type { MemeEntry } from '@/context/MemeLibrary';
 
 const makeMeme = (overrides: Partial<MemeEntry> = {}): MemeEntry => ({
@@ -30,17 +53,12 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDeleteMeme.mockResolvedValue(undefined);
   mockToggleFavorite.mockResolvedValue(undefined);
+  mockMemes = [makeMeme()];
 });
 
-describe('MemeDetailsModal', () => {
-  it('returns null when meme is null', () => {
-    const { toJSON } = render(<MemeDetailsModal meme={null} onClose={jest.fn()} />);
-    expect(toJSON()).toBeNull();
-  });
-
+describe('MemeDetailModal', () => {
   it('renders when a meme is provided', () => {
-    const meme = makeMeme();
-    const { getByText } = render(<MemeDetailsModal meme={meme} onClose={jest.fn()} />);
+    const { getByText } = render(<MemeDetailModal />);
 
     expect(getByText('Share')).toBeTruthy();
     expect(getByText('Favorite')).toBeTruthy();
@@ -48,22 +66,19 @@ describe('MemeDetailsModal', () => {
   });
 
   it('shows Unfavorite text when meme is favorited', () => {
-    const meme = makeMeme({ isFavorite: true });
-    const { getByText } = render(<MemeDetailsModal meme={meme} onClose={jest.fn()} />);
+    mockMemes = [makeMeme({ isFavorite: true })];
 
+    const { getByText } = render(<MemeDetailModal />);
     expect(getByText('Unfavorite')).toBeTruthy();
   });
 
   it('shows Favorite text when meme is not favorited', () => {
-    const meme = makeMeme({ isFavorite: false });
-    const { getByText } = render(<MemeDetailsModal meme={meme} onClose={jest.fn()} />);
-
+    const { getByText } = render(<MemeDetailModal />);
     expect(getByText('Favorite')).toBeTruthy();
   });
 
   it('calls toggleFavorite when favorite button is pressed', async () => {
-    const meme = makeMeme();
-    const { getByText } = render(<MemeDetailsModal meme={meme} onClose={jest.fn()} />);
+    const { getByText } = render(<MemeDetailModal />);
 
     await act(async () => {
       fireEvent.press(getByText('Favorite'));
@@ -72,20 +87,18 @@ describe('MemeDetailsModal', () => {
     expect(mockToggleFavorite).toHaveBeenCalledWith('1');
   });
 
-  it('calls deleteMeme and onClose on web platform', async () => {
+  it('calls deleteMeme and dismisses on web platform', async () => {
     const originalPlatform = Platform.OS;
     Platform.OS = 'web';
 
-    const onClose = jest.fn();
-    const meme = makeMeme();
-    const { getByText } = render(<MemeDetailsModal meme={meme} onClose={onClose} />);
+    const { getByText } = render(<MemeDetailModal />);
 
     await act(async () => {
       fireEvent.press(getByText('Delete'));
     });
 
     expect(mockDeleteMeme).toHaveBeenCalledWith('1');
-    expect(onClose).toHaveBeenCalled();
+    expect(mockDismiss).toHaveBeenCalled();
 
     Platform.OS = originalPlatform;
   });
@@ -94,8 +107,7 @@ describe('MemeDetailsModal', () => {
     Platform.OS = 'ios';
     const alertSpy = jest.spyOn(Alert, 'alert');
 
-    const meme = makeMeme();
-    const { getByText } = render(<MemeDetailsModal meme={meme} onClose={jest.fn()} />);
+    const { getByText } = render(<MemeDetailModal />);
 
     await act(async () => {
       fireEvent.press(getByText('Delete'));
@@ -116,7 +128,6 @@ describe('MemeDetailsModal', () => {
 
   it('deletes meme when Alert delete is confirmed', async () => {
     Platform.OS = 'ios';
-    const onClose = jest.fn();
 
     // Mock Alert.alert to immediately call the destructive action
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _msg, buttons) => {
@@ -124,15 +135,14 @@ describe('MemeDetailsModal', () => {
       if (deleteBtn?.onPress) deleteBtn.onPress();
     });
 
-    const meme = makeMeme();
-    const { getByText } = render(<MemeDetailsModal meme={meme} onClose={onClose} />);
+    const { getByText } = render(<MemeDetailModal />);
 
     await act(async () => {
       fireEvent.press(getByText('Delete'));
     });
 
     expect(mockDeleteMeme).toHaveBeenCalledWith('1');
-    expect(onClose).toHaveBeenCalled();
+    expect(mockDismiss).toHaveBeenCalled();
 
     alertSpy.mockRestore();
     Platform.OS = 'android';
@@ -147,8 +157,7 @@ describe('MemeDetailsModal', () => {
       if (cancelBtn?.onPress) cancelBtn.onPress();
     });
 
-    const meme = makeMeme();
-    const { getByText } = render(<MemeDetailsModal meme={meme} onClose={jest.fn()} />);
+    const { getByText } = render(<MemeDetailModal />);
 
     await act(async () => {
       fireEvent.press(getByText('Delete'));
