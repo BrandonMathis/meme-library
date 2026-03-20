@@ -40,11 +40,13 @@ export default function AddMemeModal() {
       >
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="px-4 pb-8">
           {uri && (
-            <Image
-              source={{ uri }}
-              style={{ width: '100%', height: 300, borderRadius: 12 }}
-              contentFit="contain"
-            />
+            <View className="max-h-80 overflow-hidden rounded-xl">
+              <Image
+                source={{ uri }}
+                style={{ width: '100%', height: '100%', maxHeight: 320 }}
+                contentFit="contain"
+              />
+            </View>
           )}
 
           <View className="mt-4">
