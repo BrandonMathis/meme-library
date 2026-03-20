@@ -10,9 +10,15 @@ interface TagInputProps {
   tags: string[];
   onTagsChange: (tags: string[]) => void;
   placeholder?: string;
+  showTags?: boolean;
 }
 
-export function TagInput({ tags, onTagsChange, placeholder = 'Add a tag...' }: TagInputProps) {
+export function TagInput({
+  tags,
+  onTagsChange,
+  placeholder = 'Add a tag...',
+  showTags = true,
+}: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
 
   const handleAddTag = () => {
@@ -45,7 +51,7 @@ export function TagInput({ tags, onTagsChange, placeholder = 'Add a tag...' }: T
         </Button>
       </View>
 
-      {tags.length > 0 && (
+      {showTags && tags.length > 0 && (
         <View className="flex-row flex-wrap gap-2">
           {tags.map((tag) => (
             <Badge key={tag} onTouchEnd={() => handleRemoveTag(tag)}>

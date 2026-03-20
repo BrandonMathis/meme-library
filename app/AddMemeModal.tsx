@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
 import { TagInput } from '@/components/TagInput';
+import { Badge } from '@/components/ui/Badge';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { useMemeLibrary } from '@/context/MemeLibrary';
@@ -57,17 +58,30 @@ export default function AddMemeModal() {
         contentContainerClassName="px-4 pb-8 pt-4"
       >
         {uri && (
-          <View className="overflow-hidden rounded-xl" style={{ height: 320 }}>
+          <View className="relative overflow-hidden rounded-xl" style={{ height: 320 }}>
             <Image
               source={{ uri }}
               style={{ width: '100%', height: '100%' }}
               contentFit="contain"
             />
+            {tags.length > 0 && (
+              <View
+                className="absolute bottom-0 left-0 right-0 flex-row flex-wrap-reverse items-end gap-1.5 p-2"
+                style={{ zIndex: 1 }}
+                pointerEvents="box-none"
+              >
+                {tags.map((tag) => (
+                  <Badge key={tag} onTouchEnd={() => setTags(tags.filter((t) => t !== tag))}>
+                    <Text className="text-xs text-primary-foreground">{tag} ✕</Text>
+                  </Badge>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
         <View className="mt-4">
-          <TagInput tags={tags} onTagsChange={setTags} />
+          <TagInput tags={tags} onTagsChange={setTags} showTags={false} />
         </View>
       </ScrollView>
     </>
