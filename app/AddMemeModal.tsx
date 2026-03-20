@@ -15,15 +15,21 @@ export default function AddMemeModal() {
   const { addMeme } = useMemeLibrary();
 
   const [tags, setTags] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleCancel = () => {
     router.dismiss();
   };
 
-  const handleSave = () => {
-    if (uri) {
-      addMeme(uri, tags);
-      router.dismiss();
+  const handleSave = async () => {
+    if (uri && !isSaving) {
+      setIsSaving(true);
+      try {
+        await addMeme(uri, tags);
+        router.dismiss();
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -37,8 +43,10 @@ export default function AddMemeModal() {
             </Button>
           ),
           headerRight: () => (
-            <Button variant="ghost" onPress={handleSave}>
-              <Text className="text-primary">Save</Text>
+            <Button variant="ghost" onPress={handleSave} disabled={isSaving}>
+              <Text className={isSaving ? 'text-muted-foreground' : 'text-primary'}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Text>
             </Button>
           ),
         }}

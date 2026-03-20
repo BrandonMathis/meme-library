@@ -113,13 +113,13 @@ export default function MemeDetailModal({ meme, onClose }: Props) {
     }
   };
 
-  const handleFavorite = () => {
-    toggleFavorite(meme.id);
+  const handleFavorite = async () => {
+    await toggleFavorite(meme.id);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (Platform.OS === 'web') {
-      deleteMeme(meme.id);
+      await deleteMeme(meme.id);
       onClose();
       return;
     }
@@ -128,8 +128,8 @@ export default function MemeDetailModal({ meme, onClose }: Props) {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: () => {
-          deleteMeme(meme.id);
+        onPress: async () => {
+          await deleteMeme(meme.id);
           onClose();
         },
       },
