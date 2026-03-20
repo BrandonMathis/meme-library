@@ -5,15 +5,15 @@ export default function TabLayout() {
     <NativeTabs>
       <NativeTabs.Trigger name="index" options={{ title: 'Meme Library' }}>
         <Icon sf={{ default: 'house', selected: 'house.fill' }} drawable="home" />
-        <Label hidden />
+        <Label>Library</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="add" options={{ title: 'Add Meme' }}>
         <Icon sf={{ default: 'plus.circle', selected: 'plus.circle.fill' }} drawable="add_circle" />
-        <Label hidden />
+        <Label>Add</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings" options={{ title: 'Settings' }}>
         <Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} drawable="settings" />
-        <Label hidden />
+        <Label>Settings</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
