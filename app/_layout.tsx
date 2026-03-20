@@ -5,6 +5,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { PortalHost } from '@rn-primitives/portal';
+
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MemeLibraryProvider } from '@/context/meme-library';
 import { NAV_THEME } from '@/lib/constants';
@@ -44,6 +46,7 @@ export default function RootLayout() {
           />
         </Stack>
         <StatusBar style="auto" />
+        <PortalHost />
       </ThemeProvider>
     </MemeLibraryProvider>
   );
