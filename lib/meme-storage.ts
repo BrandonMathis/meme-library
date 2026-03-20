@@ -1,0 +1,103 @@
+import * as SQLite from 'expo-sqlite';
+import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
+
+import type { MemeEntry } from '@/context/meme-library';
+
+const MEMES_DIR = `${FileSystem.documentDirectory}memes/`;
+
+let db: SQLite.SQLiteDatabase | null = null;
+
+async function getDb(): Promise<SQLite.SQLiteDatabase> {
+  if (!db) {
+    db = await SQLite.openDatabaseAsync('meme-library.db');
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS memes (
+        id TEXT PRIMARY KEY NOT NULL,
+        uri TEXT NOT NULL,
+        tags TEXT NOT NULL,
+        createdAt INTEGER NOT NULL
+      );
+    `);
+  }
+  return db;
+}
+
+async function ensureMemesDir(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  const dirInfo = await FileSystem.getInfoAsync(MEMES_DIR);
+  if (!dirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(MEMES_DIR, { intermediates: true });
+  }
+}
+
+export async function copyImageToLocal(sourceUri: string, id: string): Promise<string> {
+  if (Platform.OS === 'web') {
+    // On web, return the source URI as-is (blob/data URLs managed by browser)
+    return sourceUri;
+  }
+
+  await ensureMemesDir();
+
+  const extension = sourceUri.split('.').pop()?.split('?')[0] || 'jpg';
+  const localUri = `${MEMES_DIR}${id}.${extension}`;
+
+  await FileSystem.copyAsync({ from: sourceUri, to: localUri });
+  return localUri;
+}
+
+export async function deleteLocalImage(uri: string): Promise<void> {
+  if (Platform.OS === 'web') return;
+
+  try {
+    const info = await FileSystem.getInfoAsync(uri);
+    if (info.exists) {
+      await FileSystem.deleteAsync(uri);
+    }
+  } catch {
+    // Silently ignore deletion errors
+  }
+}
+
+export async function getAllMemes(): Promise<MemeEntry[]> {
+  const database = await getDb();
+  const rows = await database.getAllAsync<{
+    id: string;
+    uri: string;
+    tags: string;
+    createdAt: number;
+  }>('SELECT * FROM memes ORDER BY createdAt DESC');
+
+  return rows.map((row) => ({
+    id: row.id,
+    uri: row.uri,
+    tags: JSON.parse(row.tags),
+    createdAt: row.createdAt,
+  }));
+}
+
+export async function insertMeme(meme: MemeEntry): Promise<void> {
+  const database = await getDb();
+  await database.runAsync(
+    'INSERT INTO memes (id, uri, tags, createdAt) VALUES (?, ?, ?, ?)',
+    meme.id,
+    meme.uri,
+    JSON.stringify(meme.tags),
+    meme.createdAt,
+  );
+}
+
+export async function removeMeme(id: string): Promise<string | null> {
+  const database = await getDb();
+  const row = await database.getFirstAsync<{ uri: string }>(
+    'SELECT uri FROM memes WHERE id = ?',
+    id,
+  );
+  await database.runAsync('DELETE FROM memes WHERE id = ?', id);
+  return row?.uri ?? null;
+}
+
+export async function updateMemeTags(id: string, tags: string[]): Promise<void> {
+  const database = await getDb();
+  await database.runAsync('UPDATE memes SET tags = ? WHERE id = ?', JSON.stringify(tags), id);
+}

@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+
+import {
+  copyImageToLocal,
+  deleteLocalImage,
+  getAllMemes,
+  insertMeme,
+  removeMeme as removeMemeFromDb,
+  updateMemeTags,
+} from '@/lib/meme-storage';
 
 export type MemeEntry = {
   id: string;
@@ -9,31 +18,57 @@ export type MemeEntry = {
 
 type MemeLibraryContextType = {
   memes: MemeEntry[];
-  addMeme: (uri: string, tags: string[]) => void;
+  isLoading: boolean;
+  addMeme: (uri: string, tags: string[]) => Promise<void>;
+  deleteMeme: (id: string) => Promise<void>;
+  editTags: (id: string, tags: string[]) => Promise<void>;
 };
 
 const MemeLibraryContext = createContext<MemeLibraryContextType>({
   memes: [],
-  addMeme: () => {},
+  isLoading: true,
+  addMeme: async () => {},
+  deleteMeme: async () => {},
+  editTags: async () => {},
 });
 
 export function MemeLibraryProvider({ children }: { children: ReactNode }) {
   const [memes, setMemes] = useState<MemeEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const addMeme = useCallback((uri: string, tags: string[]) => {
-    setMemes((prev) => [
-      {
-        id: Date.now().toString(),
-        uri,
-        tags,
-        createdAt: Date.now(),
-      },
-      ...prev,
-    ]);
+  useEffect(() => {
+    getAllMemes()
+      .then(setMemes)
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const addMeme = useCallback(async (uri: string, tags: string[]) => {
+    const id = Date.now().toString();
+    const localUri = await copyImageToLocal(uri, id);
+    const createdAt = Date.now();
+    const meme: MemeEntry = { id, uri: localUri, tags, createdAt };
+
+    await insertMeme(meme);
+    setMemes((prev) => [meme, ...prev]);
+  }, []);
+
+  const deleteMeme = useCallback(async (id: string) => {
+    const uri = await removeMemeFromDb(id);
+    if (uri) {
+      await deleteLocalImage(uri);
+    }
+    setMemes((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
+  const editTags = useCallback(async (id: string, tags: string[]) => {
+    await updateMemeTags(id, tags);
+    setMemes((prev) => prev.map((m) => (m.id === id ? { ...m, tags } : m)));
   }, []);
 
   return (
-    <MemeLibraryContext.Provider value={{ memes, addMeme }}>{children}</MemeLibraryContext.Provider>
+    <MemeLibraryContext.Provider value={{ memes, isLoading, addMeme, deleteMeme, editTags }}>
+      {children}
+    </MemeLibraryContext.Provider>
   );
 }
 
