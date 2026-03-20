@@ -9,6 +9,9 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="add">
         <Icon sf={{ default: 'plus.circle', selected: 'plus.circle.fill' }} md="add_circle" />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="camera">
+        <Icon sf={{ default: 'camera', selected: 'camera.fill' }} md="photo_camera" />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} md="settings" />
       </NativeTabs.Trigger>
