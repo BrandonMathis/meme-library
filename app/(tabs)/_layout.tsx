@@ -17,9 +17,7 @@ export default function TabLayout() {
         name="add"
         options={{
           title: 'Add',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="add" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
