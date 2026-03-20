@@ -8,15 +8,16 @@ jest.mock('@/context/MemeLibrary', () => ({
   MemeLibraryProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-jest.mock('@/components/MemeDetailModal', () => {
-  const { Text } = require('react-native');
-  return {
-    __esModule: true,
-    default: ({ meme, onClose }: { meme: unknown; onClose: () => void }) => (
-      <Text testID="detail-modal">{meme ? JSON.stringify(meme) : 'closed'}</Text>
-    ),
-  };
-});
+const mockPush = jest.fn();
+
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    dismiss: jest.fn(),
+    back: jest.fn(),
+    replace: jest.fn(),
+  }),
+}));
 
 const mockedUseMemeLibrary = useMemeLibrary as jest.Mock;
 
