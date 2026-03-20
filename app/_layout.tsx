@@ -4,6 +4,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from '@react-navig
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { PortalHost } from '@rn-primitives/portal';
 
@@ -30,24 +31,26 @@ export default function RootLayout() {
   const isDark = colorScheme === 'dark';
 
   return (
-    <MemeLibraryProvider>
-      <ThemeProvider value={isDark ? DARK_THEME : LIGHT_THEME}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          <Stack.Screen
-            name="add-meme-modal"
-            options={{
-              presentation: 'formSheet',
-              title: 'Add Meme',
-              headerShown: false,
-              animation: 'slide_from_bottom',
-            }}
-          />
-        </Stack>
-        <StatusBar style="auto" />
-        <PortalHost />
-      </ThemeProvider>
-    </MemeLibraryProvider>
+    <KeyboardProvider>
+      <MemeLibraryProvider>
+        <ThemeProvider value={isDark ? DARK_THEME : LIGHT_THEME}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            <Stack.Screen
+              name="add-meme-modal"
+              options={{
+                presentation: 'formSheet',
+                title: 'Add Meme',
+                headerShown: false,
+                animation: 'slide_from_bottom',
+              }}
+            />
+          </Stack>
+          <StatusBar style="auto" />
+          <PortalHost />
+        </ThemeProvider>
+      </MemeLibraryProvider>
+    </KeyboardProvider>
   );
 }
