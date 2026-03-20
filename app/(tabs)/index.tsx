@@ -15,8 +15,11 @@ const GAP = 8;
 export default function MemeLibraryScreen() {
   const { memes } = useMemeLibrary();
   const [search, setSearch] = useState('');
-  const [selectedMeme, setSelectedMeme] = useState<MemeEntry | null>(null);
+  const [selectedMemeId, setSelectedMemeId] = useState<string | null>(null);
   const { width } = useWindowDimensions();
+
+  // Look up selected meme from context so it stays in sync with edits
+  const selectedMeme = selectedMemeId ? (memes.find((m) => m.id === selectedMemeId) ?? null) : null;
 
   const itemSize = (width - GAP * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
 
@@ -29,7 +32,7 @@ export default function MemeLibraryScreen() {
   const renderItem = useCallback(
     ({ item }: { item: MemeEntry }) => (
       <Pressable
-        onPress={() => setSelectedMeme(item)}
+        onPress={() => setSelectedMemeId(item.id)}
         className="active:opacity-80"
         style={{ width: itemSize, margin: GAP / 2 }}
       >
@@ -92,7 +95,7 @@ export default function MemeLibraryScreen() {
         />
       )}
 
-      <MemeDetailsModal meme={selectedMeme} onClose={() => setSelectedMeme(null)} />
+      <MemeDetailsModal meme={selectedMeme} onClose={() => setSelectedMemeId(null)} />
     </View>
   );
 }
