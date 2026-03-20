@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
 
 import type { MemeEntry } from '@/context/MemeLibrary';
 
@@ -39,10 +40,18 @@ async function ensureMemesDir(): Promise<void> {
 export async function copyImageToLocal(sourceUri: string, id: string): Promise<string> {
   await ensureMemesDir();
 
-  const extension = sourceUri.split('.').pop()?.split('?')[0] || 'jpg';
+  // Resolve ph:// (iOS photo library) assets to a copyable file URI
+  let resolvedUri = sourceUri;
+  if (sourceUri.startsWith('ph://')) {
+    const assetId = sourceUri.replace('ph://', '').split('/')[0];
+    const asset = await MediaLibrary.getAssetInfoAsync(assetId);
+    resolvedUri = asset.localUri ?? sourceUri;
+  }
+
+  const extension = resolvedUri.split('.').pop()?.split('?')[0] || 'jpg';
   const localUri = `${MEMES_DIR}${id}.${extension}`;
 
-  await FileSystem.copyAsync({ from: sourceUri, to: localUri });
+  await FileSystem.copyAsync({ from: resolvedUri, to: localUri });
   return localUri;
 }
 
