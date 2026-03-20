@@ -92,14 +92,17 @@ jobs:
           MESSAGE="PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
           eas update --branch "$BRANCH_NAME" --message "$MESSAGE" --json > update-output.json
           echo "branch=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          GROUP_ID=$(jq -r '.[0].group' update-output.json)
+          echo "group_id=$GROUP_ID" >> "$GITHUB_OUTPUT"
 
       - name: Generate QR code URL
         id: qr
         run: |
           PROJECT_ID="0384d7bc-46fe-4f87-ba0f-9c97ef0cad38"
+          GROUP_ID="${{ steps.eas-update.outputs.group_id }}"
           BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
           UPDATE_URL="https://u.expo.dev/${PROJECT_ID}?channel-name=${BRANCH_NAME}"
-          QR_URL="https://qr.expo.dev/eas-update?slug=meme-library&projectId=${PROJECT_ID}&channel=${BRANCH_NAME}"
+          QR_URL="https://qr.expo.dev/eas-update?projectId=${PROJECT_ID}&groupId=${GROUP_ID}"
           echo "update_url=$UPDATE_URL" >> "$GITHUB_OUTPUT"
           echo "qr_url=$QR_URL" >> "$GITHUB_OUTPUT"
 
@@ -114,7 +117,7 @@ jobs:
 
             **Scan this QR code** to open the latest version on your device:
 
-            ![${{ steps.eas-update.outputs.branch }} QR code](${{ steps.qr.outputs.qr_url }})
+            <img src="${{ steps.qr.outputs.qr_url }}" alt="${{ steps.eas-update.outputs.branch }} QR code" width="250" />
 
             **Or open directly:**
             ```
