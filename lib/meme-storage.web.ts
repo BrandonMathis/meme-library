@@ -1,4 +1,4 @@
-import type { MemeEntry } from '@/context/meme-library';
+import type { MemeEntry } from '@/context/MemeLibrary';
 
 const DB_NAME = 'meme-library';
 const DB_VERSION = 1;

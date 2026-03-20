@@ -3,10 +3,10 @@ import { ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
-import { TagInput } from '@/components/tag-input';
-import { Text } from '@/components/ui/text';
-import { Button } from '@/components/ui/button';
-import { useMemeLibrary } from '@/context/meme-library';
+import { TagInput } from '@/components/TagInput';
+import { Text } from '@/components/ui/Text';
+import { Button } from '@/components/ui/Button';
+import { useMemeLibrary } from '@/context/MemeLibrary';
 
 export default function AddMemeModal() {
   const { uri } = useLocalSearchParams<{ uri: string }>();

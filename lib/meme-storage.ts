@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system';
 
-import type { MemeEntry } from '@/context/meme-library';
+import type { MemeEntry } from '@/context/MemeLibrary';
 
 const MEMES_DIR = `${FileSystem.documentDirectory}memes/`;
 

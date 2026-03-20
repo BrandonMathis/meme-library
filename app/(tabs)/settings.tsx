@@ -11,12 +11,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Text } from '@/components/ui/text';
-import { useMemeLibrary } from '@/context/meme-library';
+} from '@/components/ui/AlertDialog';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Separator } from '@/components/ui/Separator';
+import { Text } from '@/components/ui/Text';
+import { useMemeLibrary } from '@/context/MemeLibrary';
 
 export default function SettingsScreen() {
   const { memes, destroyAll, exportData } = useMemeLibrary();
