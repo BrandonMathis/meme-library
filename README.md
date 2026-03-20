@@ -1,6 +1,6 @@
 # Welcome to your Expo app 👋
 
-[![Open in Expo Go](https://img.shields.io/badge/Open%20in%20Expo%20Go-000020?logo=expo&logoColor=white)](https://expo.dev/projects/0384d7bc-46fe-4f87-ba0f-9c97ef0cad38?channel-name=main)
+[![Open in Expo Go](https://img.shields.io/badge/Open%20in%20Expo%20Go-000020?logo=expo&logoColor=white)](https://expo.dev/preview/update?message=main&updateRuntimeVersion=1.0.0&slug=exp&projectId=0384d7bc-46fe-4f87-ba0f-9c97ef0cad38&channel=main)
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
