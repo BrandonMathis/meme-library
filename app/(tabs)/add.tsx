@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { FlatList, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, FlatList, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
@@ -23,22 +23,39 @@ export default function AddMemeScreen() {
     'undetermined',
   );
 
+  const loadPhotos = useCallback(async () => {
+    const result = await MediaLibrary.getAssetsAsync({
+      first: NUM_PHOTOS,
+      mediaType: 'photo',
+      sortBy: [MediaLibrary.SortBy.creationTime],
+    });
+    // Reverse so most recent is last (bottom-right in grid)
+    setPhotos(result.assets.reverse());
+  }, []);
+
   useEffect(() => {
     (async () => {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       setPermissionStatus(status === 'granted' ? 'granted' : 'denied');
 
       if (status === 'granted') {
-        const result = await MediaLibrary.getAssetsAsync({
-          first: NUM_PHOTOS,
-          mediaType: 'photo',
-          sortBy: [MediaLibrary.SortBy.creationTime],
-        });
-        // Reverse so most recent is last (bottom-right in grid)
-        setPhotos(result.assets.reverse());
+        loadPhotos();
       }
     })();
-  }, []);
+  }, [loadPhotos]);
+
+  // Refresh photos when app returns to foreground (e.g. after backup restore or switching apps)
+  useEffect(() => {
+    if (permissionStatus !== 'granted') return;
+
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        loadPhotos();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [permissionStatus, loadPhotos]);
 
   const handlePhotoPress = (asset: MediaLibrary.Asset) => {
     router.push({ pathname: '/AddMemeModal', params: { uri: asset.uri } });
