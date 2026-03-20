@@ -45,3 +45,7 @@ Before every git commit, you **must** ensure linting and formatting pass:
 - Use the `cn()` utility from `@/lib/utils` to merge Tailwind classes conditionally.
 - Use semantic color tokens (`bg-background`, `text-foreground`, `text-muted-foreground`, `bg-primary`, etc.) from the theme defined in `global.css` rather than hardcoded colors.
 - To add new UI components from react-native-reusables, run: `npx @react-native-reusables/cli@latest add <component-name>`
+
+## Platform Compatibility
+
+All modifications must work on both Expo Web and native (iOS/Android). Do not use libraries or native components that are unsupported on the web platform. When adding new dependencies, verify they have web support.
