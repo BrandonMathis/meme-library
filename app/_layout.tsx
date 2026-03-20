@@ -9,6 +9,7 @@ import { PortalHost } from '@rn-primitives/portal';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MemeLibraryProvider } from '@/context/MemeLibrary';
+import { SuccessAnimation } from '@/components/SuccessAnimation';
 import { NAV_THEME } from '@/lib/constants';
 
 const LIGHT_THEME: Theme = {
@@ -43,6 +44,7 @@ export default function RootLayout() {
           />
         </Stack>
         <StatusBar style="auto" />
+        <SuccessAnimation />
         <PortalHost />
       </ThemeProvider>
     </MemeLibraryProvider>

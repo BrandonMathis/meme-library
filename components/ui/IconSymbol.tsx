@@ -26,6 +26,7 @@ const MAPPING = {
   'trash.fill': 'delete',
   xmark: 'close',
   magnifyingglass: 'search',
+  'checkmark.circle.fill': 'check-circle',
 } as IconMapping;
 
 /**
