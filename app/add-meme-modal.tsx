@@ -15,17 +15,21 @@ export default function AddMemeModal() {
 
   const [tags, setTags] = useState<string[]>([]);
 
+  const handleCancel = () => {
+    router.dismiss();
+  };
+
   const handleSave = () => {
     if (uri && tags.length > 0) {
       addMeme(uri, tags);
-      router.back();
+      router.dismiss();
     }
   };
 
   return (
     <View className="flex-1 bg-background">
       <View className="flex-row items-center justify-between p-4 pb-2">
-        <Button variant="ghost" onPress={() => router.back()}>
+        <Button variant="ghost" onPress={handleCancel}>
           <Text>Cancel</Text>
         </Button>
         <Text variant="large">Add Meme</Text>
@@ -36,8 +40,12 @@ export default function AddMemeModal() {
 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="px-4 pb-8">
         {uri && (
-          <View className="h-80 overflow-hidden rounded-xl">
-            <Image source={{ uri }} className="h-full w-full" contentFit="contain" />
+          <View className="overflow-hidden rounded-xl" style={{ height: 320 }}>
+            <Image
+              source={{ uri }}
+              style={{ width: '100%', height: '100%' }}
+              contentFit="contain"
+            />
           </View>
         )}
 
