@@ -8,6 +8,12 @@
     "scheme": "memelibrary",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0384d7bc-46fe-4f87-ba0f-9c97ef0cad38"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -43,6 +49,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0384d7bc-46fe-4f87-ba0f-9c97ef0cad38"
+      }
     }
   }
 }
