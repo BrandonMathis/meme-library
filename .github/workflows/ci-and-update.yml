@@ -57,3 +57,69 @@ jobs:
 
       - name: Publish update
         run: eas update --branch preview --message "${{ github.event.head_commit.message }}"
+
+  pr-preview:
+    name: PR Preview
+    needs: lint
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish update
+        id: eas-update
+        run: |
+          BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
+          MESSAGE="PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
+          eas update --branch "$BRANCH_NAME" --message "$MESSAGE" --json > update-output.json
+          echo "branch=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Generate QR code URL
+        id: qr
+        run: |
+          PROJECT_ID="0384d7bc-46fe-4f87-ba0f-9c97ef0cad38"
+          BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
+          UPDATE_URL="https://u.expo.dev/${PROJECT_ID}?channel-name=${BRANCH_NAME}"
+          QR_URL="https://qr.expo.dev/eas-update?slug=meme-library&projectId=${PROJECT_ID}&channel=${BRANCH_NAME}"
+          echo "update_url=$UPDATE_URL" >> "$GITHUB_OUTPUT"
+          echo "qr_url=$QR_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: expo-preview
+          message: |
+            ## 📱 Expo Go Preview
+
+            This PR has a live preview available in **Expo Go**.
+
+            **Scan this QR code** to open the latest version on your device:
+
+            ![${{ steps.eas-update.outputs.branch }} QR code](${{ steps.qr.outputs.qr_url }})
+
+            **Or open directly:**
+            ```
+            ${{ steps.qr.outputs.update_url }}
+            ```
+
+            > Update branch: `${{ steps.eas-update.outputs.branch }}`
+            > Updated on: ${{ github.event.pull_request.head.sha }}
