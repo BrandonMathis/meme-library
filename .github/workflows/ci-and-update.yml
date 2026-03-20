@@ -39,23 +39,66 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for code changes
+        id: changes
+        run: |
+          CODE_CHANGES=$(git diff --name-only HEAD~1 HEAD -- \
+            'app/' \
+            'components/' \
+            'context/' \
+            'lib/' \
+            'constants/' \
+            'hooks/' \
+            'assets/' \
+            'scripts/' \
+            '*.ts' \
+            '*.tsx' \
+            '*.js' \
+            '*.jsx' \
+            '*.json' \
+            '*.css' \
+            'global.css' \
+            'tailwind.config.*' \
+            'metro.config.*' \
+            'app.json' \
+            'app.config.*' \
+            'eas.json' \
+            'babel.config.*' \
+            'tsconfig.*' \
+            'nativewind-env.d.ts' \
+          )
+          if [ -n "$CODE_CHANGES" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Changed files:"
+            echo "$CODE_CHANGES"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No code changes detected, skipping EAS update"
+          fi
 
       - name: Setup Node
+        if: steps.changes.outputs.has_changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
       - name: Setup EAS CLI
+        if: steps.changes.outputs.has_changes == 'true'
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
+        if: steps.changes.outputs.has_changes == 'true'
         run: npm ci
 
       - name: Publish update
+        if: steps.changes.outputs.has_changes == 'true'
         run: eas update --branch main --message "${{ github.event.head_commit.message }}"
 
   pr-preview:
@@ -69,23 +112,67 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for code changes
+        id: changes
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          CODE_CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
+            'app/' \
+            'components/' \
+            'context/' \
+            'lib/' \
+            'constants/' \
+            'hooks/' \
+            'assets/' \
+            'scripts/' \
+            '*.ts' \
+            '*.tsx' \
+            '*.js' \
+            '*.jsx' \
+            '*.json' \
+            '*.css' \
+            'global.css' \
+            'tailwind.config.*' \
+            'metro.config.*' \
+            'app.json' \
+            'app.config.*' \
+            'eas.json' \
+            'babel.config.*' \
+            'tsconfig.*' \
+            'nativewind-env.d.ts' \
+          )
+          if [ -n "$CODE_CHANGES" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Changed files:"
+            echo "$CODE_CHANGES"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No code changes detected, skipping EAS update"
+          fi
 
       - name: Setup Node
+        if: steps.changes.outputs.has_changes == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
       - name: Setup EAS CLI
+        if: steps.changes.outputs.has_changes == 'true'
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
+        if: steps.changes.outputs.has_changes == 'true'
         run: npm ci
 
       - name: Publish update
+        if: steps.changes.outputs.has_changes == 'true'
         id: eas-update
         run: |
           BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
@@ -96,6 +183,7 @@ jobs:
           echo "group_id=$GROUP_ID" >> "$GITHUB_OUTPUT"
 
       - name: Generate QR code URL
+        if: steps.changes.outputs.has_changes == 'true'
         id: qr
         run: |
           PROJECT_ID="0384d7bc-46fe-4f87-ba0f-9c97ef0cad38"
@@ -109,6 +197,7 @@ jobs:
           echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
       - name: Comment on PR
+        if: steps.changes.outputs.has_changes == 'true'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: expo-preview
