@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 
-import { Text } from '@/components/ui/text';
+import { Text } from '@/components/ui/Text';
 
 const NUM_COLUMNS = 3;
 const NUM_PHOTOS = 50;
@@ -41,7 +41,7 @@ export default function AddScreen() {
   }, []);
 
   const handlePhotoPress = (asset: MediaLibrary.Asset) => {
-    router.push({ pathname: '/add-meme-modal', params: { uri: asset.uri } });
+    router.push({ pathname: '/AddMemeModal', params: { uri: asset.uri } });
   };
 
   if (permissionStatus === 'undetermined') {

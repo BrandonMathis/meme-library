@@ -3,11 +3,11 @@ import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { Text } from '@/components/ui/text';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useMemeLibrary } from '@/context/meme-library';
+import { Text } from '@/components/ui/Text';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { useMemeLibrary } from '@/context/MemeLibrary';
 
 export default function AddMemeModal() {
   const { uri } = useLocalSearchParams<{ uri: string }>();
