@@ -1,26 +1,18 @@
 import { useState } from 'react';
-import {
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-  useColorScheme,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Text } from '@/components/ui/text';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useMemeLibrary } from '@/context/meme-library';
-import { Colors } from '@/constants/theme';
 
 export default function AddMemeModal() {
   const { uri } = useLocalSearchParams<{ uri: string }>();
   const router = useRouter();
   const { addMeme } = useMemeLibrary();
-  const colorScheme = useColorScheme() ?? 'light';
 
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -45,132 +37,55 @@ export default function AddMemeModal() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <View className="flex-1 bg-background">
       <KeyboardAvoidingView
-        style={styles.inner}
+        className="flex-1 p-4"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <ThemedText type="link">Cancel</ThemedText>
-          </TouchableOpacity>
-          <ThemedText type="defaultSemiBold">Add Meme</ThemedText>
-          <TouchableOpacity onPress={handleSave} disabled={tags.length === 0}>
-            <ThemedText
-              type="link"
-              style={tags.length === 0 ? styles.disabledButton : undefined}
-            >
+        <View className="mb-4 flex-row items-center justify-between">
+          <Button variant="ghost" onPress={() => router.back()}>
+            <Text>Cancel</Text>
+          </Button>
+          <Text variant="large">Add Meme</Text>
+          <Button variant="ghost" onPress={handleSave} disabled={tags.length === 0}>
+            <Text className={tags.length === 0 ? 'text-muted-foreground' : 'text-primary'}>
               Save
-            </ThemedText>
-          </TouchableOpacity>
+            </Text>
+          </Button>
         </View>
 
         {uri && (
-          <Image source={{ uri }} style={styles.preview} contentFit="contain" />
+          <Image
+            source={{ uri }}
+            style={{ width: '100%', height: 250, borderRadius: 12 }}
+            contentFit="contain"
+          />
         )}
 
-        <View style={styles.inputRow}>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                color: Colors[colorScheme].text,
-                borderColor: Colors[colorScheme].icon,
-              },
-            ]}
-            placeholder="Add a tag..."
-            placeholderTextColor={Colors[colorScheme].icon}
-            value={tagInput}
-            onChangeText={setTagInput}
-            onSubmitEditing={handleAddTag}
-            returnKeyType="done"
-            autoCapitalize="none"
-          />
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: Colors[colorScheme].tint }]}
-            onPress={handleAddTag}
-          >
-            <ThemedText style={styles.addButtonText}>+</ThemedText>
-          </TouchableOpacity>
+        <View className="mt-4 flex-row gap-2">
+          <View className="flex-1">
+            <Input
+              placeholder="Add a tag..."
+              value={tagInput}
+              onChangeText={setTagInput}
+              onSubmitEditing={handleAddTag}
+              returnKeyType="done"
+              autoCapitalize="none"
+            />
+          </View>
+          <Button size="icon" onPress={handleAddTag}>
+            <Text className="text-lg font-bold text-primary-foreground">+</Text>
+          </Button>
         </View>
 
-        <View style={styles.tagsContainer}>
+        <View className="mt-3 flex-row flex-wrap gap-2">
           {tags.map((tag) => (
-            <TouchableOpacity
-              key={tag}
-              style={[styles.tag, { backgroundColor: Colors[colorScheme].tint }]}
-              onPress={() => handleRemoveTag(tag)}
-            >
-              <ThemedText style={styles.tagText}>
-                {tag} ✕
-              </ThemedText>
-            </TouchableOpacity>
+            <Badge key={tag} onTouchEnd={() => handleRemoveTag(tag)}>
+              <Text className="text-xs text-primary-foreground">{tag} ✕</Text>
+            </Badge>
           ))}
         </View>
       </KeyboardAvoidingView>
-    </ThemedView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  inner: {
-    flex: 1,
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  preview: {
-    width: '100%',
-    height: 250,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-  },
-  addButton: {
-    width: 44,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  tagText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  disabledButton: {
-    opacity: 0.4,
-  },
-});

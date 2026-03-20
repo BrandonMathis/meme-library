@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
+import { FlatList, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Text } from '@/components/ui/text';
 
 const NUM_COLUMNS = 3;
 const NUM_PHOTOS = 20;
@@ -50,68 +43,43 @@ export default function AddScreen() {
 
   if (permissionStatus === 'undetermined') {
     return (
-      <ThemedView style={styles.container}>
-        <View style={styles.centered}>
-          <ThemedText>Requesting photo access...</ThemedText>
-        </View>
-      </ThemedView>
+      <View className="flex-1 items-center justify-center bg-background p-4">
+        <Text variant="muted">Requesting photo access...</Text>
+      </View>
     );
   }
 
   if (permissionStatus === 'denied') {
     return (
-      <ThemedView style={styles.container}>
-        <View style={styles.centered}>
-          <ThemedText type="subtitle">Photo Access Required</ThemedText>
-          <ThemedText>Please grant photo library access in your device settings.</ThemedText>
-        </View>
-      </ThemedView>
+      <View className="flex-1 items-center justify-center gap-2 bg-background p-4">
+        <Text variant="h4">Photo Access Required</Text>
+        <Text variant="muted" className="text-center">
+          Please grant photo library access in your device settings.
+        </Text>
+      </View>
     );
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <View style={styles.headerRow}>
-        <ThemedText type="title">Add Meme</ThemedText>
-        <ThemedText>Tap a photo to add it to your library</ThemedText>
+    <View className="flex-1 bg-background">
+      <View className="gap-1 px-4 pb-3 pt-16">
+        <Text variant="h3" className="text-left">
+          Add Meme
+        </Text>
+        <Text variant="muted">Tap a photo to add it to your library</Text>
       </View>
       <FlatList
         data={photos}
         numColumns={NUM_COLUMNS}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.grid}
-        columnWrapperStyle={styles.row}
+        contentContainerStyle={{ gap: GAP }}
+        columnWrapperStyle={{ gap: GAP }}
         renderItem={({ item }) => (
           <TouchableOpacity onPress={() => handlePhotoPress(item)} activeOpacity={0.7}>
             <Image source={{ uri: item.uri }} style={{ width: imageSize, height: imageSize }} />
           </TouchableOpacity>
         )}
       />
-    </ThemedView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-    padding: 16,
-  },
-  headerRow: {
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 12,
-    gap: 4,
-  },
-  grid: {
-    gap: GAP,
-  },
-  row: {
-    gap: GAP,
-  },
-});
