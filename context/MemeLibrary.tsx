@@ -8,6 +8,7 @@ import {
   getAllMemes,
   insertMeme,
   removeMeme as removeMemeFromDb,
+  updateMemeFavorite,
   updateMemeTags,
 } from '@/lib/meme-storage';
 
@@ -16,6 +17,7 @@ export type MemeEntry = {
   uri: string;
   tags: string[];
   createdAt: number;
+  isFavorite: boolean;
 };
 
 type MemeLibraryContextType = {
@@ -24,6 +26,7 @@ type MemeLibraryContextType = {
   addMeme: (uri: string, tags: string[]) => Promise<void>;
   deleteMeme: (id: string) => Promise<void>;
   editTags: (id: string, tags: string[]) => Promise<void>;
+  toggleFavorite: (id: string) => Promise<void>;
   destroyAll: () => Promise<void>;
   exportData: () => Promise<string>;
 };
@@ -34,6 +37,7 @@ const MemeLibraryContext = createContext<MemeLibraryContextType>({
   addMeme: async () => {},
   deleteMeme: async () => {},
   editTags: async () => {},
+  toggleFavorite: async () => {},
   destroyAll: async () => {},
   exportData: async () => '',
 });
@@ -52,7 +56,7 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
     const id = Date.now().toString();
     const localUri = await copyImageToLocal(uri, id);
     const createdAt = Date.now();
-    const meme: MemeEntry = { id, uri: localUri, tags, createdAt };
+    const meme: MemeEntry = { id, uri: localUri, tags, createdAt, isFavorite: false };
 
     await insertMeme(meme);
     setMemes((prev) => [meme, ...prev]);
@@ -71,6 +75,15 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
     setMemes((prev) => prev.map((m) => (m.id === id ? { ...m, tags } : m)));
   }, []);
 
+  const toggleFavorite = useCallback(
+    async (id: string) => {
+      setMemes((prev) => prev.map((m) => (m.id === id ? { ...m, isFavorite: !m.isFavorite } : m)));
+      const meme = memes.find((m) => m.id === id);
+      await updateMemeFavorite(id, meme ? !meme.isFavorite : true);
+    },
+    [memes],
+  );
+
   const destroyAll = useCallback(async () => {
     await destroyAllFromDb();
     setMemes([]);
@@ -82,7 +95,16 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
 
   return (
     <MemeLibraryContext.Provider
-      value={{ memes, isLoading, addMeme, deleteMeme, editTags, destroyAll, exportData }}
+      value={{
+        memes,
+        isLoading,
+        addMeme,
+        deleteMeme,
+        editTags,
+        toggleFavorite,
+        destroyAll,
+        exportData,
+      }}
     >
       {children}
     </MemeLibraryContext.Provider>

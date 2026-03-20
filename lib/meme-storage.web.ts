@@ -79,6 +79,16 @@ export async function removeMeme(id: string): Promise<string | null> {
   return uri;
 }
 
+export async function updateMemeFavorite(id: string, isFavorite: boolean): Promise<void> {
+  const db = await openDb();
+  const tx = db.transaction(MEMES_STORE, 'readwrite');
+  const store = tx.objectStore(MEMES_STORE);
+  const existing = await idbRequest(store.get(id) as IDBRequest<MemeEntry | undefined>);
+  if (existing) {
+    await idbRequest(store.put({ ...existing, isFavorite }));
+  }
+}
+
 export async function updateMemeTags(id: string, tags: string[]): Promise<void> {
   const db = await openDb();
   const tx = db.transaction(MEMES_STORE, 'readwrite');

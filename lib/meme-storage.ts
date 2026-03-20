@@ -15,9 +15,16 @@ async function getDb(): Promise<SQLite.SQLiteDatabase> {
         id TEXT PRIMARY KEY NOT NULL,
         uri TEXT NOT NULL,
         tags TEXT NOT NULL,
-        createdAt INTEGER NOT NULL
+        createdAt INTEGER NOT NULL,
+        isFavorite INTEGER NOT NULL DEFAULT 0
       );
     `);
+    // Add isFavorite column for databases created before this migration
+    try {
+      await db.runAsync('ALTER TABLE memes ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0');
+    } catch {
+      // Column already exists, ignore
+    }
   }
   return db;
 }
@@ -57,6 +64,7 @@ export async function getAllMemes(): Promise<MemeEntry[]> {
     uri: string;
     tags: string;
     createdAt: number;
+    isFavorite: number;
   }>('SELECT * FROM memes ORDER BY createdAt DESC');
 
   return rows.map((row) => ({
@@ -64,17 +72,19 @@ export async function getAllMemes(): Promise<MemeEntry[]> {
     uri: row.uri,
     tags: JSON.parse(row.tags),
     createdAt: row.createdAt,
+    isFavorite: row.isFavorite === 1,
   }));
 }
 
 export async function insertMeme(meme: MemeEntry): Promise<void> {
   const database = await getDb();
   await database.runAsync(
-    'INSERT INTO memes (id, uri, tags, createdAt) VALUES (?, ?, ?, ?)',
+    'INSERT INTO memes (id, uri, tags, createdAt, isFavorite) VALUES (?, ?, ?, ?, ?)',
     meme.id,
     meme.uri,
     JSON.stringify(meme.tags),
     meme.createdAt,
+    meme.isFavorite ? 1 : 0,
   );
 }
 
@@ -86,6 +96,11 @@ export async function removeMeme(id: string): Promise<string | null> {
   );
   await database.runAsync('DELETE FROM memes WHERE id = ?', id);
   return row?.uri ?? null;
+}
+
+export async function updateMemeFavorite(id: string, isFavorite: boolean): Promise<void> {
+  const database = await getDb();
+  await database.runAsync('UPDATE memes SET isFavorite = ? WHERE id = ?', isFavorite ? 1 : 0, id);
 }
 
 export async function updateMemeTags(id: string, tags: string[]): Promise<void> {
