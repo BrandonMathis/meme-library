@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -34,26 +34,20 @@ export default function AddMemeModal() {
         </Button>
       </View>
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="px-4 pb-8">
-          {uri && (
-            <View className="max-h-80 overflow-hidden rounded-xl">
-              <Image
-                source={{ uri }}
-                style={{ width: '100%', height: '100%', maxHeight: 320 }}
-                contentFit="contain"
-              />
-            </View>
-          )}
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerClassName="px-4 pb-8">
+        {uri && (
+          <Image
+            source={{ uri }}
+            className="w-full rounded-xl"
+            style={{ aspectRatio: 1, maxHeight: 320 }}
+            contentFit="contain"
+          />
+        )}
 
-          <View className="mt-4">
-            <TagInput tags={tags} onTagsChange={setTags} />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <View className="mt-4">
+          <TagInput tags={tags} onTagsChange={setTags} />
+        </View>
+      </ScrollView>
     </View>
   );
 }
