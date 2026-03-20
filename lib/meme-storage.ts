@@ -1,6 +1,5 @@
 import * as SQLite from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
 
 import type { MemeEntry } from '@/context/meme-library';
 
@@ -24,7 +23,6 @@ async function getDb(): Promise<SQLite.SQLiteDatabase> {
 }
 
 async function ensureMemesDir(): Promise<void> {
-  if (Platform.OS === 'web') return;
   const dirInfo = await FileSystem.getInfoAsync(MEMES_DIR);
   if (!dirInfo.exists) {
     await FileSystem.makeDirectoryAsync(MEMES_DIR, { intermediates: true });
@@ -32,11 +30,6 @@ async function ensureMemesDir(): Promise<void> {
 }
 
 export async function copyImageToLocal(sourceUri: string, id: string): Promise<string> {
-  if (Platform.OS === 'web') {
-    // On web, return the source URI as-is (blob/data URLs managed by browser)
-    return sourceUri;
-  }
-
   await ensureMemesDir();
 
   const extension = sourceUri.split('.').pop()?.split('?')[0] || 'jpg';
@@ -47,8 +40,6 @@ export async function copyImageToLocal(sourceUri: string, id: string): Promise<s
 }
 
 export async function deleteLocalImage(uri: string): Promise<void> {
-  if (Platform.OS === 'web') return;
-
   try {
     const info = await FileSystem.getInfoAsync(uri);
     if (info.exists) {
