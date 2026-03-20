@@ -10,6 +10,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Text } from '@/components/ui/Text';
 import { useMemeLibrary } from '@/context/MemeLibrary';
 
@@ -51,8 +52,8 @@ export function SuccessAnimation() {
         style={animatedStyle}
         className="items-center rounded-3xl bg-black/70 px-10 py-8"
       >
-        <Text className="text-5xl">&#10003;</Text>
-        <Text className="mt-2 text-lg font-semibold text-white">Meme Saved!</Text>
+        <IconSymbol name="checkmark.circle.fill" size={56} color="white" />
+        <Text className="mt-3 text-lg font-semibold text-white">Meme Saved!</Text>
       </Animated.View>
     </View>
   );
