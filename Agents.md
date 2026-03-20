@@ -21,3 +21,13 @@ Expo React Native application using Expo Router with file-based routing.
 
 - `npm start` — Start Expo dev server
 - `npm run lint` — Run ESLint
+- `npx prettier --check .` — Check formatting
+- `npx prettier --write .` — Fix formatting
+
+## Pre-Commit Rules
+
+Before every git commit, you **must** ensure linting and formatting pass:
+
+1. Run `npm run lint` and fix any errors
+2. Run `npx prettier --check .` and fix any issues with `npx prettier --write .`
+3. Only commit once both commands pass cleanly
