@@ -20,7 +20,8 @@ type Props = {
   onClose: () => void;
 };
 
-const DISMISS_THRESHOLD = 150;
+const DISMISS_THRESHOLD = 80;
+const DISMISS_VELOCITY = 500;
 
 export default function MemeDetailsModal({ meme, onClose }: Props) {
   const { deleteMeme, toggleFavorite } = useMemeLibrary();
@@ -47,6 +48,7 @@ export default function MemeDetailsModal({ meme, onClose }: Props) {
   };
 
   const panGesture = Gesture.Pan()
+    .activeOffsetY(10)
     .onUpdate((e) => {
       // Only allow dragging down
       if (e.translationY > 0) {
@@ -55,7 +57,8 @@ export default function MemeDetailsModal({ meme, onClose }: Props) {
       }
     })
     .onEnd((e) => {
-      if (e.translationY > DISMISS_THRESHOLD) {
+      const shouldDismiss = e.translationY > DISMISS_THRESHOLD || e.velocityY > DISMISS_VELOCITY;
+      if (shouldDismiss) {
         translateY.value = withTiming(screenHeight, { duration: 200 }, () => {
           runOnJS(onClose)();
         });
@@ -139,10 +142,9 @@ export default function MemeDetailsModal({ meme, onClose }: Props) {
   return (
     <Modal visible={!!meme} transparent animationType="none" onRequestClose={dismiss}>
       {/* Backdrop */}
-      <Animated.View
-        className="absolute bottom-0 left-0 right-0 top-0 bg-black"
-        style={backdropStyle}
-      />
+      <Pressable onPress={dismiss} className="absolute bottom-0 left-0 right-0 top-0">
+        <Animated.View className="flex-1 bg-black" style={backdropStyle} />
+      </Pressable>
 
       {/* Sheet */}
       <GestureDetector gesture={panGesture}>
@@ -159,8 +161,8 @@ export default function MemeDetailsModal({ meme, onClose }: Props) {
             </View>
 
             {/* Swipe indicator */}
-            <View className="items-center pt-3">
-              <View className="h-1 w-10 rounded-full bg-white/40" />
+            <View className="items-center pb-1 pt-3">
+              <View className="h-1.5 w-14 rounded-full bg-white/60" />
             </View>
 
             {/* Image */}
