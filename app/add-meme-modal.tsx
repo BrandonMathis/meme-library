@@ -42,7 +42,7 @@ export default function AddMemeModal() {
         className="flex-1 p-4"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View className="mb-4 flex-row items-center justify-between">
+        <View className="z-10 mb-4 flex-row items-center justify-between">
           <Button variant="ghost" onPress={() => router.back()}>
             <Text>Cancel</Text>
           </Button>
