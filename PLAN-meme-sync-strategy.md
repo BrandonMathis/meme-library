@@ -62,6 +62,139 @@ The web app and sync API are both hosted on **EAS Hosting** (Expo's cloud platfo
 
 **Why Cloudflare R2 over S3**: EAS Hosting runs on Cloudflare Workers. R2 is Cloudflare's object storage. Calling R2 from a Cloudflare Worker is a local binding — no network hop, no egress fees. It's the natural pairing.
 
+### Alternative Data Backend: Replacing Turso
+
+Turso is a $7M seed-stage company founded in 2021. While its open-source foundation (libSQL, a fork of SQLite) mitigates total lock-in risk, the company itself may not exist in 5-6 years. Below are alternative backends for the sync metadata layer that trade cutting-edge features for long-term reliability. **The rest of the architecture (R2, Stripe, EAS Hosting, CRDT layer) remains identical** — only the server-side database changes.
+
+#### Option A: DigitalOcean Managed PostgreSQL — The Boring Choice
+
+**Cost**: $15/month (1 vCPU, 1GB RAM, 10GB storage)
+
+**Why Postgres**:
+
+- Existed since **1996** — 30 years of production use, not going anywhere
+- The most widely deployed relational database after MySQL/SQLite
+- Every hosting provider offers managed Postgres (DO, AWS RDS, Render, Railway, Neon, Supabase)
+- If DigitalOcean disappears, `pg_dump` and restore on any other provider in minutes
+
+**What you get from DO Managed**:
+
+- Automated daily backups with point-in-time recovery
+- Automatic failover (standby nodes on higher tiers)
+- OS patches and Postgres version upgrades handled by DO
+- Connection pooling built in
+- Monitoring dashboard in DO console
+
+**Edge compatibility note**: Postgres does NOT have a native HTTP/edge driver like Turso does. From EAS Hosting (Cloudflare Workers), you'd connect via:
+
+- **Neon's serverless driver** (`@neondatabase/serverless`) — HTTP-based Postgres, works in edge runtimes
+- **Supabase's `supabase-js`** — REST API over Postgres, edge-compatible
+- **PgBouncer + TCP** — if EAS Hosting supports outbound TCP (Cloudflare Workers do via `connect()`)
+
+**Schema equivalent** (replaces Turso's libSQL tables):
+
+```sql
+CREATE TABLE customers (
+  stripe_customer_id TEXT PRIMARY KEY,
+  email TEXT NOT NULL,
+  subscription_status TEXT NOT NULL DEFAULT 'inactive',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE device_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stripe_customer_id TEXT REFERENCES customers(stripe_customer_id),
+  device_name TEXT,
+  token_hash TEXT NOT NULL,
+  last_seen_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE sync_deltas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stripe_customer_id TEXT REFERENCES customers(stripe_customer_id),
+  delta BYTEA NOT NULL,               -- CRDT binary delta
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_sync_deltas_customer ON sync_deltas(stripe_customer_id, created_at);
+```
+
+**Longevity verdict**: Essentially infinite. PostgreSQL will outlive every other service in this stack.
+
+#### Option B: SQLite + Litestream on a $6 Droplet — The Ultra-Simple Choice
+
+**Cost**: $6/month (droplet) + $5/month (DO Spaces for backups) = **$11/month**
+
+**How it works**:
+
+- SQLite database file lives on the droplet alongside your sync relay
+- [Litestream](https://litestream.io/) continuously replicates the SQLite WAL (write-ahead log) to DO Spaces (S3-compatible)
+- If the droplet dies, spin up a new one, restore from Spaces — sub-second data loss
+- SQLite has existed since **2000**, is public domain, and is embedded in literally every smartphone on Earth
+
+**Architecture change**: Instead of EAS API routes calling out to Turso over HTTP, the sync relay runs as a **small Node.js/Express process on the droplet** with SQLite embedded via `better-sqlite3`. The EAS-hosted web app calls this droplet's API for sync operations.
+
+```
+┌──────────┐                ┌─────────────────────────┐
+│  iPhone   │ ── deltas ──→ │  DO Droplet ($6/mo)     │
+│ (SQLite)  │ ←─ deltas ── │  Express + better-sqlite3│
+└──────────┘                │                         │
+                            │  SQLite ──Litestream──→ DO Spaces
+                            │                         │
+                            │  (R2 still used for     │
+                            │   image blobs)          │
+                            └─────────────────────────┘
+```
+
+**Trade-offs**:
+
+- **Pro**: Simplest possible setup. One process, one file, one backup stream.
+- **Pro**: `better-sqlite3` handles 2,000+ queries/sec with joins — more than enough for meme sync.
+- **Con**: Single-writer. Only one process can write at a time. Fine for sequential sync relay, bad if you ever need concurrent writes.
+- **Con**: Not edge-deployed — the droplet is in one region. Latency higher for users far from that region.
+- **Con**: You manage the droplet (OS updates, SSL certs, process management). ~1 hour/quarter of maintenance.
+
+**Longevity verdict**: SQLite is indestructible. Litestream is open-source and simple enough to replace with a cron job + `cp` if abandoned. The droplet is a commodity — move to any VPS provider.
+
+#### Option C: Neon (Serverless Postgres) — The Modern Middle Ground
+
+**Cost**: Free tier (512MB storage, 0.25 vCPU), Pro at $19/month
+
+**Why Neon**:
+
+- It's just PostgreSQL under the hood — full compatibility, `pg_dump` works, every Postgres tool works
+- **Serverless HTTP driver** (`@neondatabase/serverless`) works natively in Cloudflare Workers / EAS Hosting — no TCP needed
+- Scales to zero when idle (you don't pay for a database sitting idle overnight)
+- Founded 2021, but has **$104M+ in funding** (significantly more runway than Turso's $7M)
+- Branching feature lets you create instant database copies for testing
+
+**Edge compatibility**: First-class. Neon was designed for edge runtimes. The HTTP driver is a drop-in replacement for `pg` in serverless environments.
+
+**Migration path**: Since it's Postgres, you can migrate to DO Managed Postgres, AWS RDS, Supabase, or self-hosted Postgres with zero schema changes. The only thing that changes is the connection string.
+
+**Longevity verdict**: Moderate-to-good. VC-backed startup risk exists, but Postgres underneath means zero lock-in. If Neon shuts down, change one connection string and point at any other Postgres.
+
+#### Comparison Table
+
+| | **Turso** | **DO Managed Postgres** | **SQLite + Litestream** | **Neon** |
+|---|---|---|---|---|
+| **Cost/mo** | Free tier, $29 Pro | $15 | $11 | Free tier, $19 Pro |
+| **Technology age** | libSQL (2022) | PostgreSQL (1996) | SQLite (2000) | PostgreSQL (1996) |
+| **Company funding** | $7M seed | Public company (DO) | N/A (self-hosted) | $104M+ |
+| **Edge-native** | Yes (HTTP driver) | No (needs adapter) | No (droplet only) | Yes (HTTP driver) |
+| **Lock-in risk** | Low (libSQL is OSS) | None | None | None (it's Postgres) |
+| **Maintenance** | Zero (managed) | Zero (managed) | ~1hr/quarter | Zero (managed) |
+| **5-6 year survival** | Uncertain | Very high | Guaranteed | Likely |
+| **Max longevity pick** | | **Yes** | **Yes** | |
+
+#### Recommendation
+
+- **If edge compatibility matters** (staying on EAS Hosting for API routes): **Neon**. It's Postgres with a Workers-native driver.
+- **If you want zero risk and don't mind $15/mo**: **DO Managed Postgres**. The most boring, reliable choice.
+- **If you're going self-hosted anyway** (see self-hosted option below): **SQLite + Litestream**. Pairs naturally with a droplet-based sync relay.
+
 ---
 
 ## Sync Architecture: CRDT + EAS API Relay
