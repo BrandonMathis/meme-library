@@ -78,9 +78,9 @@ export default function AddScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: GAP, paddingBottom: bottom + 80 }}
         columnWrapperStyle={{ gap: GAP }}
-        onContentSizeChange={() => {
+        onContentSizeChange={(_, contentHeight) => {
           if (photos.length > 0) {
-            flatListRef.current?.scrollToEnd({ animated: false });
+            flatListRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
           }
         }}
         renderItem={({ item }) => (
