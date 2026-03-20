@@ -1,27 +1,12 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Text } from '@/components/ui/text';
 
 export default function SettingsScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <View style={styles.content}>
-        <ThemedText type="title">Settings</ThemedText>
-        <ThemedText>Configure your meme library preferences.</ThemedText>
-      </View>
-    </ThemedView>
+    <View className="flex-1 items-center justify-center gap-2 bg-background">
+      <Text variant="h3">Settings</Text>
+      <Text variant="muted">Configure your meme library preferences.</Text>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-  },
-});

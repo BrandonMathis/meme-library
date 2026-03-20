@@ -9,4 +9,9 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    settings: {
+      'import/ignore': ['class-variance-authority', 'react-native'],
+    },
+  },
 ]);
