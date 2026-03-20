@@ -31,9 +31,28 @@ jobs:
       - name: Run Prettier check
         run: npm run format
 
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run tests
+        run: npm test
+
   eas-update:
     name: EAS Update
-    needs: lint
+    needs: [lint, test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -103,7 +122,7 @@ jobs:
 
   pr-preview:
     name: PR Preview
-    needs: lint
+    needs: [lint, test]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
