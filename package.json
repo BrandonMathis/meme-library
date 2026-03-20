@@ -60,7 +60,9 @@
   "expo": {
     "install": {
       "exclude": [
-        "expo-media-library"
+        "expo-media-library",
+        "expo-file-system",
+        "expo-sharing"
       ]
     }
   },
