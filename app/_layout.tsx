@@ -35,6 +35,11 @@ function InnerLayout() {
 
   const themeVars = vars(colors as Record<string, string>);
 
+  const modalHeaderStyle = {
+    backgroundColor: `hsl(${colors['--primary']})`,
+  };
+  const modalHeaderTintColor = `hsl(${colors['--primary-foreground']})`;
+
   return (
     <View style={[{ flex: 1 }, themeVars]}>
       <ThemeProvider value={navTheme}>
@@ -45,6 +50,9 @@ function InnerLayout() {
             options={{
               presentation: 'formSheet',
               title: 'Add Meme',
+              headerStyle: modalHeaderStyle,
+              headerTintColor: modalHeaderTintColor,
+              headerTitleStyle: { color: modalHeaderTintColor },
             }}
           />
           <Stack.Screen
@@ -52,6 +60,9 @@ function InnerLayout() {
             options={{
               presentation: 'formSheet',
               title: 'Meme Details',
+              headerStyle: modalHeaderStyle,
+              headerTintColor: modalHeaderTintColor,
+              headerTitleStyle: { color: modalHeaderTintColor },
             }}
           />
         </Stack>
