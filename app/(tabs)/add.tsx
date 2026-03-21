@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, FlatList, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import {
+  AppState,
+  FlatList,
+  LayoutAnimation,
+  Platform,
+  TouchableOpacity,
+  UIManager,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
@@ -7,9 +16,21 @@ import { useRouter } from 'expo-router';
 
 import { Text } from '@/components/ui/Text';
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 const NUM_COLUMNS = 3;
 const NUM_PHOTOS = 50;
 const GAP = 2;
+
+function fetchPhotos() {
+  return MediaLibrary.getAssetsAsync({
+    first: NUM_PHOTOS,
+    mediaType: 'photo',
+    sortBy: [MediaLibrary.SortBy.creationTime],
+  });
+}
 
 export default function AddMemeScreen() {
   const router = useRouter();
@@ -18,44 +39,52 @@ export default function AddMemeScreen() {
   const imageSize = (width - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
 
   const flatListRef = useRef<FlatList>(null);
+  const hasInitiallyScrolled = useRef(false);
   const [photos, setPhotos] = useState<MediaLibrary.Asset[]>([]);
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>(
     'undetermined',
   );
 
-  const loadPhotos = useCallback(async () => {
-    const result = await MediaLibrary.getAssetsAsync({
-      first: NUM_PHOTOS,
-      mediaType: 'photo',
-      sortBy: [MediaLibrary.SortBy.creationTime],
-    });
-    // Reverse so most recent is last (bottom-right in grid)
-    setPhotos(result.assets.reverse());
-  }, []);
-
+  // Initial load — full replace, no animation
   useEffect(() => {
     (async () => {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       setPermissionStatus(status === 'granted' ? 'granted' : 'denied');
 
       if (status === 'granted') {
-        loadPhotos();
+        const result = await fetchPhotos();
+        setPhotos(result.assets.reverse());
       }
     })();
-  }, [loadPhotos]);
+  }, []);
 
-  // Refresh photos when app returns to foreground (e.g. after backup restore or switching apps)
+  // Refresh on foreground — merge only new photos with animation
+  const refreshPhotos = useCallback(async () => {
+    const result = await fetchPhotos();
+    const latest = result.assets.reverse();
+
+    setPhotos((prev) => {
+      const existingIds = new Set(prev.map((p) => p.id));
+      const newPhotos = latest.filter((a) => !existingIds.has(a.id));
+      if (newPhotos.length === 0) return prev;
+
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      // New photos (most recent) go at the end so they appear at the bottom
+      return [...prev, ...newPhotos].slice(-NUM_PHOTOS);
+    });
+  }, []);
+
   useEffect(() => {
     if (permissionStatus !== 'granted') return;
 
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {
-        loadPhotos();
+        refreshPhotos();
       }
     });
 
     return () => subscription.remove();
-  }, [permissionStatus, loadPhotos]);
+  }, [permissionStatus, refreshPhotos]);
 
   const handlePhotoPress = (asset: MediaLibrary.Asset) => {
     router.push({ pathname: '/AddMemeModal', params: { uri: asset.uri } });
@@ -96,7 +125,8 @@ export default function AddMemeScreen() {
         contentContainerStyle={{ gap: GAP, paddingBottom: bottom + 80 }}
         columnWrapperStyle={{ gap: GAP }}
         onContentSizeChange={(_, contentHeight) => {
-          if (photos.length > 0) {
+          if (photos.length > 0 && !hasInitiallyScrolled.current) {
+            hasInitiallyScrolled.current = true;
             flatListRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
           }
         }}
