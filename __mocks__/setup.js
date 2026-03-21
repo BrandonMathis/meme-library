@@ -51,6 +51,7 @@ jest.mock('expo-router', () => ({
 jest.mock('expo-media-library', () => ({
   requestPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
   getAssetsAsync: jest.fn(() => Promise.resolve({ assets: [] })),
+  addListener: jest.fn(() => ({ remove: jest.fn() })),
   SortBy: { creationTime: 'creationTime' },
 }));
 

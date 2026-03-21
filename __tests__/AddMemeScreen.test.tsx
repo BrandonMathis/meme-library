@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
 import * as MediaLibrary from 'expo-media-library';
 
@@ -20,11 +20,25 @@ import AddMemeScreen from '@/app/(tabs)/add';
 
 const mockedRequestPermissions = MediaLibrary.requestPermissionsAsync as jest.Mock;
 const mockedGetAssets = MediaLibrary.getAssetsAsync as jest.Mock;
+const mockedAddListener = MediaLibrary.addListener as jest.Mock;
+
+let appStateAddEventListenerSpy: jest.SpyInstance;
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockedRequestPermissions.mockResolvedValue({ status: 'granted' });
   mockedGetAssets.mockResolvedValue({ assets: [] });
+  mockedAddListener.mockReturnValue({ remove: jest.fn() });
+  // Ensure AppState.addEventListener always returns a valid subscription
+  appStateAddEventListenerSpy = jest
+    .spyOn(AppState, 'addEventListener')
+    .mockReturnValue({ remove: jest.fn() } as unknown as ReturnType<
+      typeof AppState.addEventListener
+    >);
+});
+
+afterEach(() => {
+  appStateAddEventListenerSpy.mockRestore();
 });
 
 describe('AddMemeScreen', () => {
@@ -97,7 +111,15 @@ describe('AddMemeScreen', () => {
     });
   });
 
-  it('merges new photos on foreground without duplicates', async () => {
+  it('fully replaces photos on foreground refresh', async () => {
+    let appStateListener: ((state: string) => void) | undefined;
+    appStateAddEventListenerSpy.mockImplementation((type: string, listener: unknown) => {
+      if (type === 'change') {
+        appStateListener = listener as (state: string) => void;
+      }
+      return { remove: jest.fn() } as unknown as ReturnType<typeof AppState.addEventListener>;
+    });
+
     const initialAssets = [
       { id: 'a1', uri: 'file://photo1.jpg' },
       { id: 'a2', uri: 'file://photo2.jpg' },
@@ -110,24 +132,96 @@ describe('AddMemeScreen', () => {
       expect(mockedGetAssets).toHaveBeenCalledTimes(1);
     });
 
-    // Simulate new photo added to camera roll
-    const updatedAssets = [{ id: 'a3', uri: 'file://photo3.jpg' }, ...initialAssets];
+    // Simulate new photo added and one deleted from camera roll
+    const updatedAssets = [
+      { id: 'a3', uri: 'file://photo3.jpg' },
+      { id: 'a1', uri: 'file://photo1.jpg' },
+    ];
     mockedGetAssets.mockResolvedValue({ assets: [...updatedAssets] });
 
-    // Get the AppState listener and simulate foreground
-    const addEventListenerSpy = jest.spyOn(AppState, 'addEventListener');
-    const calls = addEventListenerSpy.mock.calls;
-    const changeListener = calls.find((c) => c[0] === 'change');
-    if (changeListener) {
-      await act(async () => {
-        await (changeListener[1] as (state: string) => void)('active');
-      });
-    }
+    expect(appStateListener).toBeDefined();
+    await act(async () => {
+      appStateListener!('active');
+    });
+
+    await waitFor(() => {
+      // Second call is the foreground refresh
+      expect(mockedGetAssets).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('removes deleted photos on foreground sync', async () => {
+    let appStateListener: ((state: string) => void) | undefined;
+    appStateAddEventListenerSpy.mockImplementation((type: string, listener: unknown) => {
+      if (type === 'change') {
+        appStateListener = listener as (state: string) => void;
+      }
+      return { remove: jest.fn() } as unknown as ReturnType<typeof AppState.addEventListener>;
+    });
+
+    const initialAssets = [
+      { id: 'a1', uri: 'file://photo1.jpg' },
+      { id: 'a2', uri: 'file://photo2.jpg' },
+      { id: 'a3', uri: 'file://photo3.jpg' },
+    ];
+    mockedGetAssets.mockResolvedValue({ assets: [...initialAssets] });
+
+    render(<AddMemeScreen />);
+
+    await waitFor(() => {
+      expect(mockedGetAssets).toHaveBeenCalledTimes(1);
+    });
+
+    // Simulate photo a2 being deleted from the device library
+    const afterDeletion = [
+      { id: 'a1', uri: 'file://photo1.jpg' },
+      { id: 'a3', uri: 'file://photo3.jpg' },
+    ];
+    mockedGetAssets.mockResolvedValue({ assets: [...afterDeletion] });
+
+    // Simulate app coming to foreground
+    expect(appStateListener).toBeDefined();
+    await act(async () => {
+      appStateListener!('active');
+    });
 
     await waitFor(() => {
       expect(mockedGetAssets).toHaveBeenCalledTimes(2);
     });
+  });
 
-    addEventListenerSpy.mockRestore();
+  it('subscribes to MediaLibrary changes and refreshes on change event', async () => {
+    let mediaListener: (() => void) | undefined;
+    mockedAddListener.mockImplementation((cb: () => void) => {
+      mediaListener = cb;
+      return { remove: jest.fn() };
+    });
+
+    const initialAssets = [
+      { id: 'a1', uri: 'file://photo1.jpg' },
+      { id: 'a2', uri: 'file://photo2.jpg' },
+    ];
+    mockedGetAssets.mockResolvedValue({ assets: [...initialAssets] });
+
+    render(<AddMemeScreen />);
+
+    await waitFor(() => {
+      expect(mockedGetAssets).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockedAddListener).toHaveBeenCalled();
+
+    // Simulate a library change event (e.g. photo deleted externally)
+    const updatedAssets = [{ id: 'a1', uri: 'file://photo1.jpg' }];
+    mockedGetAssets.mockResolvedValue({ assets: [...updatedAssets] });
+
+    expect(mediaListener).toBeDefined();
+    await act(async () => {
+      mediaListener!();
+    });
+
+    await waitFor(() => {
+      expect(mockedGetAssets).toHaveBeenCalledTimes(2);
+    });
   });
 });
