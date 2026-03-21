@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { AppState, Platform, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
@@ -52,46 +52,45 @@ export default function AddMemeScreen() {
     'undetermined',
   );
 
-  // Keep ref in sync so callbacks can read it without re-creating
+  // Keep ref in sync so onContentSizeChange has a stable identity
   photosLengthRef.current = photos.length;
 
   const contentContainerStyle = useMemo(() => ({ paddingBottom: bottom + 80 }), [bottom]);
 
-  // Initial load — full replace, no animation
+  // Always fetch the latest photos and fully replace state so the list
+  // is an exact mirror of the device library's most recent photos.
+  const refreshPhotos = useCallback(async () => {
+    const result = await fetchPhotos();
+    setPhotos(result.assets.reverse());
+  }, []);
+
+  // Initial load
   useEffect(() => {
     (async () => {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       setPermissionStatus(status === 'granted' ? 'granted' : 'denied');
 
       if (status === 'granted') {
-        const result = await fetchPhotos();
-        setPhotos(result.assets.reverse());
+        await refreshPhotos();
       }
     })();
-  }, []);
+  }, [refreshPhotos]);
 
-  // Refresh on foreground — remove deleted photos and merge new ones
-  const refreshPhotos = useCallback(async () => {
-    const result = await MediaLibrary.getAssetsAsync({
-      first: Math.max(NUM_PHOTOS, photosLengthRef.current + 20),
-      mediaType: 'photo',
-      sortBy: [MediaLibrary.SortBy.creationTime],
+  // Real-time sync via MediaLibrary change listener (native only).
+  // Fires when photos are added, deleted, or modified on the device.
+  useEffect(() => {
+    if (permissionStatus !== 'granted') return;
+    if (Platform.OS === 'web') return;
+
+    const subscription = MediaLibrary.addListener(() => {
+      refreshPhotos();
     });
-    const latest = result.assets.reverse();
-    const latestIds = new Set(latest.map((a) => a.id));
 
-    setPhotos((prev) => {
-      // Remove photos that no longer exist in the device library
-      const surviving = prev.filter((p) => latestIds.has(p.id));
-      // Add any new photos not already in our list
-      const existingIds = new Set(surviving.map((p) => p.id));
-      const newPhotos = latest.filter((a) => !existingIds.has(a.id));
+    return () => subscription.remove();
+  }, [permissionStatus, refreshPhotos]);
 
-      if (surviving.length === prev.length && newPhotos.length === 0) return prev;
-      return [...surviving, ...newPhotos];
-    });
-  }, []);
-
+  // Fallback: refresh on foreground (covers web where addListener is
+  // unsupported, and catches any changes the native listener may miss).
   useEffect(() => {
     if (permissionStatus !== 'granted') return;
 
