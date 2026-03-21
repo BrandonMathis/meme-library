@@ -65,11 +65,11 @@ export default function AddMemeScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="gap-1 px-4 pb-3 pt-16">
-        <Text variant="h3" className="text-left">
-          Add Meme
+      <View className="px-4 pb-3 pt-14">
+        <Text variant="h3">Add Meme</Text>
+        <Text variant="muted" className="mt-1">
+          Tap a photo to add it to your library
         </Text>
-        <Text variant="muted">Tap a photo to add it to your library</Text>
       </View>
       <FlatList
         ref={flatListRef}
