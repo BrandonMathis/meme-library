@@ -20,13 +20,15 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-      if (stored === 'light' || stored === 'dark' || stored === 'system') {
-        setThemeModeState(stored);
-        setColorScheme(stored);
-      }
-      setLoaded(true);
-    });
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((stored) => {
+        if (stored === 'light' || stored === 'dark' || stored === 'system') {
+          setThemeModeState(stored);
+          setColorScheme(stored);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [setColorScheme]);
 
   const setThemeMode = useCallback(
