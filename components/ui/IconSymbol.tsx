@@ -26,6 +26,8 @@ const MAPPING = {
   'trash.fill': 'delete',
   xmark: 'close',
   magnifyingglass: 'search',
+  'line.3.horizontal.decrease.circle': 'filter-list',
+  'line.3.horizontal.decrease.circle.fill': 'filter-list',
   'checkmark.circle.fill': 'check-circle',
 } as IconMapping;
 

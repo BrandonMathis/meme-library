@@ -168,4 +168,112 @@ describe('MemeLibraryScreen', () => {
     const { getByPlaceholderText } = render(<MemeLibraryScreen />);
     expect(getByPlaceholderText('Search by tag...')).toBeTruthy();
   });
+
+  // Filter button tests
+  it('renders the filter button', () => {
+    const { getByTestId } = render(<MemeLibraryScreen />);
+    expect(getByTestId('filter-button')).toBeTruthy();
+  });
+
+  it('toggles filter bar visibility when filter button is pressed', () => {
+    const { getByTestId, queryByTestId } = render(<MemeLibraryScreen />);
+
+    // Filter bar should be hidden initially
+    expect(queryByTestId('filter-bar')).toBeNull();
+
+    // Press filter button to show
+    fireEvent.press(getByTestId('filter-button'));
+    expect(getByTestId('filter-bar')).toBeTruthy();
+
+    // Press again to hide
+    fireEvent.press(getByTestId('filter-button'));
+    expect(queryByTestId('filter-bar')).toBeNull();
+  });
+
+  it('shows filter options when filter bar is visible', () => {
+    const { getByTestId, getByText } = render(<MemeLibraryScreen />);
+
+    fireEvent.press(getByTestId('filter-button'));
+
+    expect(getByText('All Memes')).toBeTruthy();
+    expect(getByText('Favorites')).toBeTruthy();
+  });
+
+  it('filters memes by favorites', () => {
+    mockedUseMemeLibrary.mockReturnValue({
+      memes: [
+        makeMeme({ id: '1', tags: ['funny'], isFavorite: true }),
+        makeMeme({ id: '2', tags: ['dog'], uri: 'file://meme2.jpg', isFavorite: false }),
+      ],
+      isLoading: false,
+    });
+
+    const { getByTestId, getByText, queryByText } = render(<MemeLibraryScreen />);
+
+    // Open filter bar and select Favorites
+    fireEvent.press(getByTestId('filter-button'));
+    fireEvent.press(getByTestId('filter-option-favorites'));
+
+    expect(getByText('funny')).toBeTruthy();
+    expect(queryByText('dog')).toBeNull();
+  });
+
+  it('shows all memes when All Memes filter is selected', () => {
+    mockedUseMemeLibrary.mockReturnValue({
+      memes: [
+        makeMeme({ id: '1', tags: ['funny'], isFavorite: true }),
+        makeMeme({ id: '2', tags: ['dog'], uri: 'file://meme2.jpg', isFavorite: false }),
+      ],
+      isLoading: false,
+    });
+
+    const { getByTestId, getByText } = render(<MemeLibraryScreen />);
+
+    // Open filter bar, select Favorites, then switch back to All
+    fireEvent.press(getByTestId('filter-button'));
+    fireEvent.press(getByTestId('filter-option-favorites'));
+    fireEvent.press(getByTestId('filter-option-all'));
+
+    expect(getByText('funny')).toBeTruthy();
+    expect(getByText('dog')).toBeTruthy();
+  });
+
+  it('combines search and filter', () => {
+    mockedUseMemeLibrary.mockReturnValue({
+      memes: [
+        makeMeme({ id: '1', tags: ['funny', 'cat'], isFavorite: true }),
+        makeMeme({ id: '2', tags: ['funny', 'dog'], uri: 'file://meme2.jpg', isFavorite: false }),
+        makeMeme({ id: '3', tags: ['cat'], uri: 'file://meme3.jpg', isFavorite: true }),
+      ],
+      isLoading: false,
+    });
+
+    const { getByTestId, getByPlaceholderText, getByText, queryByText } = render(
+      <MemeLibraryScreen />,
+    );
+
+    // Filter by favorites and search for "cat"
+    fireEvent.press(getByTestId('filter-button'));
+    fireEvent.press(getByTestId('filter-option-favorites'));
+    fireEvent.changeText(getByPlaceholderText('Search by tag...'), 'cat');
+
+    // Only favorite memes with "cat" tag should show
+    // Meme 1 (favorite, has "cat") and Meme 3 (favorite, has "cat") match
+    // Meme 2 (not favorite) should be excluded
+    expect(queryByText('dog')).toBeNull();
+  });
+
+  it('shows favorites empty state when no favorites exist', () => {
+    mockedUseMemeLibrary.mockReturnValue({
+      memes: [makeMeme({ id: '1', tags: ['funny'], isFavorite: false })],
+      isLoading: false,
+    });
+
+    const { getByTestId, getByText } = render(<MemeLibraryScreen />);
+
+    fireEvent.press(getByTestId('filter-button'));
+    fireEvent.press(getByTestId('filter-option-favorites'));
+
+    expect(getByText('No favorite memes yet.')).toBeTruthy();
+  });
 });
