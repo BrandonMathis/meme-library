@@ -130,4 +130,48 @@ describe('AddMemeScreen', () => {
 
     addEventListenerSpy.mockRestore();
   });
+
+  it('removes deleted photos on foreground sync', async () => {
+    let appStateListener: ((state: string) => void) | undefined;
+    const addEventListenerSpy = jest
+      .spyOn(AppState, 'addEventListener')
+      .mockImplementation((type, listener) => {
+        if (type === 'change') {
+          appStateListener = listener as (state: string) => void;
+        }
+        return { remove: jest.fn() } as unknown as ReturnType<typeof AppState.addEventListener>;
+      });
+
+    const initialAssets = [
+      { id: 'a1', uri: 'file://photo1.jpg' },
+      { id: 'a2', uri: 'file://photo2.jpg' },
+      { id: 'a3', uri: 'file://photo3.jpg' },
+    ];
+    mockedGetAssets.mockResolvedValue({ assets: [...initialAssets] });
+
+    render(<AddMemeScreen />);
+
+    await waitFor(() => {
+      expect(mockedGetAssets).toHaveBeenCalledTimes(1);
+    });
+
+    // Simulate photo a2 being deleted from the device library
+    const afterDeletion = [
+      { id: 'a1', uri: 'file://photo1.jpg' },
+      { id: 'a3', uri: 'file://photo3.jpg' },
+    ];
+    mockedGetAssets.mockResolvedValue({ assets: [...afterDeletion] });
+
+    // Simulate app coming to foreground
+    expect(appStateListener).toBeDefined();
+    await act(async () => {
+      appStateListener!('active');
+    });
+
+    await waitFor(() => {
+      expect(mockedGetAssets).toHaveBeenCalledTimes(2);
+    });
+
+    addEventListenerSpy.mockRestore();
+  });
 });

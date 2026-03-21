@@ -70,20 +70,25 @@ export default function AddMemeScreen() {
     })();
   }, []);
 
-  // Refresh on foreground — merge only new photos (no animation)
+  // Refresh on foreground — remove deleted photos and merge new ones
   const refreshPhotos = useCallback(async () => {
-    const result = await fetchPhotos();
+    const result = await MediaLibrary.getAssetsAsync({
+      first: Math.max(NUM_PHOTOS, photosLengthRef.current + 20),
+      mediaType: 'photo',
+      sortBy: [MediaLibrary.SortBy.creationTime],
+    });
     const latest = result.assets.reverse();
+    const latestIds = new Set(latest.map((a) => a.id));
 
     setPhotos((prev) => {
-      const existingIds = new Set(prev.map((p) => p.id));
+      // Remove photos that no longer exist in the device library
+      const surviving = prev.filter((p) => latestIds.has(p.id));
+      // Add any new photos not already in our list
+      const existingIds = new Set(surviving.map((p) => p.id));
       const newPhotos = latest.filter((a) => !existingIds.has(a.id));
-      if (newPhotos.length === 0) return prev;
 
-      // New photos (most recent) go at the end so they appear at the bottom.
-      // Don't trim from the start — removing leading items shifts content and
-      // breaks the user's scroll position.
-      return [...prev, ...newPhotos];
+      if (surviving.length === prev.length && newPhotos.length === 0) return prev;
+      return [...surviving, ...newPhotos];
     });
   }, []);
 
