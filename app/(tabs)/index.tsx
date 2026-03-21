@@ -37,6 +37,7 @@ export default function MemeLibraryScreen() {
           source={{ uri: item.uri }}
           style={{ width: itemSize, height: itemSize, borderRadius: 12 }}
           contentFit="cover"
+          cachePolicy="memory-disk"
         />
         {item.tags.length > 0 && (
           <View className="mt-1 flex-row flex-wrap gap-1">
@@ -71,24 +72,23 @@ export default function MemeLibraryScreen() {
         </View>
       </View>
 
-      {filtered.length === 0 ? (
-        <View className="flex-1 items-center justify-center gap-2">
-          <Text variant="muted">
-            {memes.length === 0
-              ? 'Your meme collection will appear here.'
-              : 'No memes match your search.'}
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          numColumns={NUM_COLUMNS}
-          contentContainerStyle={{ paddingHorizontal: GAP / 2, paddingBottom: 100 }}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      <FlatList
+        data={filtered}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        numColumns={NUM_COLUMNS}
+        contentContainerStyle={{ paddingHorizontal: GAP / 2, paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center gap-2 pt-40">
+            <Text variant="muted">
+              {memes.length === 0
+                ? 'Your meme collection will appear here.'
+                : 'No memes match your search.'}
+            </Text>
+          </View>
+        }
+      />
     </View>
   );
 }
