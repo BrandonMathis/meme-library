@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { AppState } from 'react-native';
+import { act, render, fireEvent, waitFor } from '@testing-library/react-native';
 import * as MediaLibrary from 'expo-media-library';
 
 const mockPush = jest.fn();
@@ -82,7 +83,7 @@ describe('AddMemeScreen', () => {
 
     const { findByTestId } = render(<AddMemeScreen />);
 
-    // Wait for photos to load - since FlatList renders TouchableOpacity items
+    // Wait for photos to load - since FlashList renders TouchableOpacity items
     await waitFor(() => {
       expect(mockedGetAssets).toHaveBeenCalled();
     });
@@ -94,5 +95,39 @@ describe('AddMemeScreen', () => {
     await waitFor(() => {
       expect(mockedRequestPermissions).toHaveBeenCalled();
     });
+  });
+
+  it('merges new photos on foreground without duplicates', async () => {
+    const initialAssets = [
+      { id: 'a1', uri: 'file://photo1.jpg' },
+      { id: 'a2', uri: 'file://photo2.jpg' },
+    ];
+    mockedGetAssets.mockResolvedValue({ assets: [...initialAssets] });
+
+    render(<AddMemeScreen />);
+
+    await waitFor(() => {
+      expect(mockedGetAssets).toHaveBeenCalledTimes(1);
+    });
+
+    // Simulate new photo added to camera roll
+    const updatedAssets = [{ id: 'a3', uri: 'file://photo3.jpg' }, ...initialAssets];
+    mockedGetAssets.mockResolvedValue({ assets: [...updatedAssets] });
+
+    // Get the AppState listener and simulate foreground
+    const addEventListenerSpy = jest.spyOn(AppState, 'addEventListener');
+    const calls = addEventListenerSpy.mock.calls;
+    const changeListener = calls.find((c) => c[0] === 'change');
+    if (changeListener) {
+      await act(async () => {
+        await (changeListener[1] as (state: string) => void)('active');
+      });
+    }
+
+    await waitFor(() => {
+      expect(mockedGetAssets).toHaveBeenCalledTimes(2);
+    });
+
+    addEventListenerSpy.mockRestore();
   });
 });

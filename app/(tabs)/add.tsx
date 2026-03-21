@@ -1,30 +1,16 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  AppState,
-  FlatList,
-  LayoutAnimation,
-  Platform,
-  TouchableOpacity,
-  UIManager,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { AppState, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
+import { FlashList } from '@shopify/flash-list';
 
 import { Text } from '@/components/ui/Text';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const NUM_COLUMNS = 3;
 const NUM_PHOTOS = 50;
 const GAP = 2;
-
-const columnWrapperStyle = { gap: GAP };
 
 function fetchPhotos() {
   return MediaLibrary.getAssetsAsync({
@@ -47,7 +33,7 @@ const PhotoItem = memo(function PhotoItem({
   const handlePress = useCallback(() => onPress(uri), [uri, onPress]);
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
-      <Image source={{ uri }} style={{ width: size, height: size }} />
+      <Image source={{ uri }} style={{ width: size, height: size, margin: GAP / 2 }} />
     </TouchableOpacity>
   );
 });
@@ -56,9 +42,9 @@ export default function AddMemeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { bottom } = useSafeAreaInsets();
-  const imageSize = (width - GAP * (NUM_COLUMNS - 1)) / NUM_COLUMNS;
+  const imageSize = width / NUM_COLUMNS - GAP;
 
-  const flatListRef = useRef<FlatList>(null);
+  const listRef = useRef<FlashList<MediaLibrary.Asset>>(null);
   const hasInitiallyScrolled = useRef(false);
   const photosLengthRef = useRef(0);
   const [photos, setPhotos] = useState<MediaLibrary.Asset[]>([]);
@@ -69,7 +55,7 @@ export default function AddMemeScreen() {
   // Keep ref in sync so callbacks can read it without re-creating
   photosLengthRef.current = photos.length;
 
-  const contentContainerStyle = useMemo(() => ({ gap: GAP, paddingBottom: bottom + 80 }), [bottom]);
+  const contentContainerStyle = useMemo(() => ({ paddingBottom: bottom + 80 }), [bottom]);
 
   // Initial load — full replace, no animation
   useEffect(() => {
@@ -84,7 +70,7 @@ export default function AddMemeScreen() {
     })();
   }, []);
 
-  // Refresh on foreground — merge only new photos with animation
+  // Refresh on foreground — merge only new photos (no animation)
   const refreshPhotos = useCallback(async () => {
     const result = await fetchPhotos();
     const latest = result.assets.reverse();
@@ -94,7 +80,6 @@ export default function AddMemeScreen() {
       const newPhotos = latest.filter((a) => !existingIds.has(a.id));
       if (newPhotos.length === 0) return prev;
 
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       // New photos (most recent) go at the end so they appear at the bottom
       return [...prev, ...newPhotos].slice(-NUM_PHOTOS);
     });
@@ -133,7 +118,7 @@ export default function AddMemeScreen() {
   const onContentSizeChange = useCallback((_: number, contentHeight: number) => {
     if (photosLengthRef.current > 0 && !hasInitiallyScrolled.current) {
       hasInitiallyScrolled.current = true;
-      flatListRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
+      listRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
     }
   }, []);
 
@@ -164,15 +149,15 @@ export default function AddMemeScreen() {
         </Text>
         <Text variant="muted">Tap a photo to add it to your library</Text>
       </View>
-      <FlatList
-        ref={flatListRef}
+      <FlashList
+        ref={listRef}
         data={photos}
         numColumns={NUM_COLUMNS}
         keyExtractor={keyExtractor}
         contentContainerStyle={contentContainerStyle}
-        columnWrapperStyle={columnWrapperStyle}
         onContentSizeChange={onContentSizeChange}
         renderItem={renderItem}
+        estimatedItemSize={imageSize}
       />
     </View>
   );
