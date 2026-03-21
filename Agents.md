@@ -29,15 +29,17 @@ Expo React Native application using Expo Router with file-based routing.
 - `npx @react-native-reusables/cli@latest add <component>` — Add a new RNR component
 - `npx prettier --check .` — Check formatting
 - `npx prettier --write .` — Fix formatting
+- `npm run typecheck` — Run TypeScript type checking
 
 ## Pre-Commit Rules
 
 Before every git commit, you **must** ensure tests, linting, and formatting pass:
 
 1. Run `npm test` and fix any failing tests
-2. Run `npm run lint` and fix any errors
-3. Run `npx prettier --check .` and fix any issues with `npx prettier --write .`
-4. Only commit once all tests pass and both commands pass cleanly
+2. Run `npm run typecheck` and fix any type errors
+3. Run `npm run lint` and fix any errors
+4. Run `npx prettier --check .` and fix any issues with `npx prettier --write .`
+5. Only commit once all checks pass cleanly
 
 ## Testing Guidelines
 
