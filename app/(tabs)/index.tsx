@@ -85,7 +85,7 @@ export default function MemeLibraryScreen() {
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           numColumns={NUM_COLUMNS}
-          contentContainerStyle={{ paddingHorizontal: GAP / 2, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: GAP / 2, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         />
       )}
