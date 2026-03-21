@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as MediaLibrary from 'expo-media-library';
 import { useRouter } from 'expo-router';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, FlashListRef } from '@shopify/flash-list';
 
 import { Text } from '@/components/ui/Text';
 
@@ -44,7 +44,7 @@ export default function AddMemeScreen() {
   const { bottom } = useSafeAreaInsets();
   const imageSize = width / NUM_COLUMNS - GAP;
 
-  const listRef = useRef<FlashList<MediaLibrary.Asset>>(null);
+  const listRef = useRef<FlashListRef<MediaLibrary.Asset>>(null);
   const hasInitiallyScrolled = useRef(false);
   const photosLengthRef = useRef(0);
   const [photos, setPhotos] = useState<MediaLibrary.Asset[]>([]);
@@ -157,7 +157,6 @@ export default function AddMemeScreen() {
         contentContainerStyle={contentContainerStyle}
         onContentSizeChange={onContentSizeChange}
         renderItem={renderItem}
-        estimatedItemSize={imageSize}
       />
     </View>
   );
