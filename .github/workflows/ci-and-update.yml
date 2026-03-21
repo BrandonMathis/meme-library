@@ -76,6 +76,32 @@ jobs:
       - name: npm audit
         run: npm audit --audit-level=moderate
 
+  reserve-pr-comment:
+    name: Reserve PR Comment
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Post placeholder comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: expo-preview
+          message: |
+            ## 📱 Expo Go Preview
+
+            ⏳ **Building preview…** This comment will be updated with deployment details once the build is complete.
+
+            <img src="https://placehold.co/250x250/e8e8e8/b0b0b0?text=%E2%8F%B3%0ABuilding+Preview..." alt="QR code loading" width="250" height="250" />
+
+            **Open in Expo Go:** ⏳ _Pending…_
+
+            > **Update Branch:** `pr-${{ github.event.pull_request.number }}`
+            > **Commit:** ${{ github.event.pull_request.head.sha }}
+            >
+            > Waiting for lint, tests, and EAS update to finish…
+
   web-export:
     name: Web Export Check
     needs: lint
