@@ -80,8 +80,10 @@ export default function AddMemeScreen() {
       const newPhotos = latest.filter((a) => !existingIds.has(a.id));
       if (newPhotos.length === 0) return prev;
 
-      // New photos (most recent) go at the end so they appear at the bottom
-      return [...prev, ...newPhotos].slice(-NUM_PHOTOS);
+      // New photos (most recent) go at the end so they appear at the bottom.
+      // Don't trim from the start — removing leading items shifts content and
+      // breaks the user's scroll position.
+      return [...prev, ...newPhotos];
     });
   }, []);
 
