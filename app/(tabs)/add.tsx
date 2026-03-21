@@ -34,19 +34,20 @@ function fetchPhotos() {
   });
 }
 
+// Only primitive props so React.memo shallow comparison is bulletproof
 const PhotoItem = memo(function PhotoItem({
-  asset,
+  uri,
   size,
   onPress,
 }: {
-  asset: MediaLibrary.Asset;
+  uri: string;
   size: number;
-  onPress: (asset: MediaLibrary.Asset) => void;
+  onPress: (uri: string) => void;
 }) {
-  const handlePress = useCallback(() => onPress(asset), [asset, onPress]);
+  const handlePress = useCallback(() => onPress(uri), [uri, onPress]);
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
-      <Image source={{ uri: asset.uri }} style={{ width: size, height: size }} />
+      <Image source={{ uri }} style={{ width: size, height: size }} />
     </TouchableOpacity>
   );
 });
@@ -59,10 +60,14 @@ export default function AddMemeScreen() {
 
   const flatListRef = useRef<FlatList>(null);
   const hasInitiallyScrolled = useRef(false);
+  const photosLengthRef = useRef(0);
   const [photos, setPhotos] = useState<MediaLibrary.Asset[]>([]);
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>(
     'undetermined',
   );
+
+  // Keep ref in sync so callbacks can read it without re-creating
+  photosLengthRef.current = photos.length;
 
   const contentContainerStyle = useMemo(() => ({ gap: GAP, paddingBottom: bottom + 80 }), [bottom]);
 
@@ -107,31 +112,30 @@ export default function AddMemeScreen() {
     return () => subscription.remove();
   }, [permissionStatus, refreshPhotos]);
 
-  const handlePhotoPress = useCallback(
-    (asset: MediaLibrary.Asset) => {
-      router.push({ pathname: '/AddMemeModal', params: { uri: asset.uri } });
-    },
-    [router],
-  );
+  // Stable ref for router so handlePhotoPress never changes identity
+  const routerRef = useRef(router);
+  routerRef.current = router;
+
+  const handlePhotoPress = useCallback((uri: string) => {
+    routerRef.current.push({ pathname: '/AddMemeModal', params: { uri } });
+  }, []);
 
   const keyExtractor = useCallback((item: MediaLibrary.Asset) => item.id, []);
 
   const renderItem = useCallback(
     ({ item }: { item: MediaLibrary.Asset }) => (
-      <PhotoItem asset={item} size={imageSize} onPress={handlePhotoPress} />
+      <PhotoItem uri={item.uri} size={imageSize} onPress={handlePhotoPress} />
     ),
     [imageSize, handlePhotoPress],
   );
 
-  const onContentSizeChange = useCallback(
-    (_: number, contentHeight: number) => {
-      if (photos.length > 0 && !hasInitiallyScrolled.current) {
-        hasInitiallyScrolled.current = true;
-        flatListRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
-      }
-    },
-    [photos.length],
-  );
+  // Use ref for photos.length so this callback has a stable identity (empty deps)
+  const onContentSizeChange = useCallback((_: number, contentHeight: number) => {
+    if (photosLengthRef.current > 0 && !hasInitiallyScrolled.current) {
+      hasInitiallyScrolled.current = true;
+      flatListRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
+    }
+  }, []);
 
   if (permissionStatus === 'undetermined') {
     return (
