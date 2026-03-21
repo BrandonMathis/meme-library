@@ -104,7 +104,7 @@ export default function MemeDetailModal() {
         options={{
           headerLeft: () => (
             <Button variant="ghost" onPress={handleClose}>
-              <Text>Close</Text>
+              <Text className="text-primary-foreground">Close</Text>
             </Button>
           ),
         }}

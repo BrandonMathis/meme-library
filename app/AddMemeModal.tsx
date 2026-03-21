@@ -37,12 +37,16 @@ export default function AddMemeModal() {
         options={{
           headerLeft: () => (
             <Button variant="ghost" onPress={handleCancel}>
-              <Text>Cancel</Text>
+              <Text className="text-primary-foreground">Cancel</Text>
             </Button>
           ),
           headerRight: () => (
             <Button variant="ghost" onPress={handleSave} disabled={isSaving}>
-              <Text className={isSaving ? 'text-muted-foreground' : 'text-primary'}>
+              <Text
+                className={
+                  isSaving ? 'text-primary-foreground/50' : 'font-bold text-primary-foreground'
+                }
+              >
                 {isSaving ? 'Saving...' : 'Save'}
               </Text>
             </Button>

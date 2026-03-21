@@ -1,8 +1,20 @@
 import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
 
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppTheme } from '@/context/ThemeContext';
+import { THEMES } from '@/lib/themes';
+
 export default function TabLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const { themeId } = useAppTheme();
+
+  const theme = THEMES[themeId];
+  const colors = isDark ? theme.dark : theme.light;
+  const primaryColor = `hsl(${colors['--primary']})`;
+
   return (
-    <NativeTabs>
+    <NativeTabs tintColor={primaryColor}>
       <NativeTabs.Trigger name="index" options={{ title: 'Meme Library' }}>
         <Icon sf={{ default: 'house', selected: 'house.fill' }} drawable="home" />
         <Label>Library</Label>
