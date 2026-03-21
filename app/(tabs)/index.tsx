@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { View, FlatList, Pressable, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 
@@ -17,7 +18,9 @@ export default function MemeLibraryScreen() {
   const [search, setSearch] = useState('');
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { bottom } = useSafeAreaInsets();
 
+  const TAB_BAR_HEIGHT = 49;
   const itemSize = (width - GAP * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
 
   const filtered = useMemo(() => {
@@ -37,6 +40,7 @@ export default function MemeLibraryScreen() {
           source={{ uri: item.uri }}
           style={{ width: itemSize, height: itemSize, borderRadius: 12 }}
           contentFit="cover"
+          cachePolicy="memory-disk"
         />
         {item.tags.length > 0 && (
           <View className="mt-1 flex-row flex-wrap gap-1">
@@ -71,24 +75,26 @@ export default function MemeLibraryScreen() {
         </View>
       </View>
 
-      {filtered.length === 0 ? (
-        <View className="flex-1 items-center justify-center gap-2">
-          <Text variant="muted">
-            {memes.length === 0
-              ? 'Your meme collection will appear here.'
-              : 'No memes match your search.'}
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          numColumns={NUM_COLUMNS}
-          contentContainerStyle={{ paddingHorizontal: GAP / 2, paddingBottom: 32 }}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      <FlatList
+        data={filtered}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        numColumns={NUM_COLUMNS}
+        contentContainerStyle={{
+          paddingHorizontal: GAP / 2,
+          paddingBottom: TAB_BAR_HEIGHT + bottom,
+        }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center gap-2 pt-40">
+            <Text variant="muted">
+              {memes.length === 0
+                ? 'Your meme collection will appear here.'
+                : 'No memes match your search.'}
+            </Text>
+          </View>
+        }
+      />
     </View>
   );
 }
