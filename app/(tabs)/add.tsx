@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   FlatList,
@@ -24,6 +24,8 @@ const NUM_COLUMNS = 3;
 const NUM_PHOTOS = 50;
 const GAP = 2;
 
+const columnWrapperStyle = { gap: GAP };
+
 function fetchPhotos() {
   return MediaLibrary.getAssetsAsync({
     first: NUM_PHOTOS,
@@ -31,6 +33,23 @@ function fetchPhotos() {
     sortBy: [MediaLibrary.SortBy.creationTime],
   });
 }
+
+const PhotoItem = memo(function PhotoItem({
+  asset,
+  size,
+  onPress,
+}: {
+  asset: MediaLibrary.Asset;
+  size: number;
+  onPress: (asset: MediaLibrary.Asset) => void;
+}) {
+  const handlePress = useCallback(() => onPress(asset), [asset, onPress]);
+  return (
+    <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
+      <Image source={{ uri: asset.uri }} style={{ width: size, height: size }} />
+    </TouchableOpacity>
+  );
+});
 
 export default function AddMemeScreen() {
   const router = useRouter();
@@ -44,6 +63,8 @@ export default function AddMemeScreen() {
   const [permissionStatus, setPermissionStatus] = useState<'undetermined' | 'granted' | 'denied'>(
     'undetermined',
   );
+
+  const contentContainerStyle = useMemo(() => ({ gap: GAP, paddingBottom: bottom + 80 }), [bottom]);
 
   // Initial load — full replace, no animation
   useEffect(() => {
@@ -86,9 +107,31 @@ export default function AddMemeScreen() {
     return () => subscription.remove();
   }, [permissionStatus, refreshPhotos]);
 
-  const handlePhotoPress = (asset: MediaLibrary.Asset) => {
-    router.push({ pathname: '/AddMemeModal', params: { uri: asset.uri } });
-  };
+  const handlePhotoPress = useCallback(
+    (asset: MediaLibrary.Asset) => {
+      router.push({ pathname: '/AddMemeModal', params: { uri: asset.uri } });
+    },
+    [router],
+  );
+
+  const keyExtractor = useCallback((item: MediaLibrary.Asset) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: MediaLibrary.Asset }) => (
+      <PhotoItem asset={item} size={imageSize} onPress={handlePhotoPress} />
+    ),
+    [imageSize, handlePhotoPress],
+  );
+
+  const onContentSizeChange = useCallback(
+    (_: number, contentHeight: number) => {
+      if (photos.length > 0 && !hasInitiallyScrolled.current) {
+        hasInitiallyScrolled.current = true;
+        flatListRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
+      }
+    },
+    [photos.length],
+  );
 
   if (permissionStatus === 'undetermined') {
     return (
@@ -121,20 +164,11 @@ export default function AddMemeScreen() {
         ref={flatListRef}
         data={photos}
         numColumns={NUM_COLUMNS}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ gap: GAP, paddingBottom: bottom + 80 }}
-        columnWrapperStyle={{ gap: GAP }}
-        onContentSizeChange={(_, contentHeight) => {
-          if (photos.length > 0 && !hasInitiallyScrolled.current) {
-            hasInitiallyScrolled.current = true;
-            flatListRef.current?.scrollToOffset({ offset: contentHeight, animated: false });
-          }
-        }}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handlePhotoPress(item)} activeOpacity={0.7}>
-            <Image source={{ uri: item.uri }} style={{ width: imageSize, height: imageSize }} />
-          </TouchableOpacity>
-        )}
+        keyExtractor={keyExtractor}
+        contentContainerStyle={contentContainerStyle}
+        columnWrapperStyle={columnWrapperStyle}
+        onContentSizeChange={onContentSizeChange}
+        renderItem={renderItem}
       />
     </View>
   );
