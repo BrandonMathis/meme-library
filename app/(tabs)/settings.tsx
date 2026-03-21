@@ -23,12 +23,12 @@ import { THEMES, THEME_IDS, type ThemeId } from '@/lib/themes';
 
 const THEME_PREVIEW_COLORS: Record<ThemeId, string[]> = {
   default: ['hsl(0,0%,9%)', 'hsl(0,0%,45%)', 'hsl(0,0%,90%)'],
-  dank: ['hsl(270,70%,50%)', 'hsl(280,60%,40%)', 'hsl(270,30%,85%)'],
-  retrowave: ['hsl(330,85%,55%)', 'hsl(190,70%,50%)', 'hsl(280,45%,30%)'],
-  pepe: ['hsl(140,60%,35%)', 'hsl(100,40%,50%)', 'hsl(120,25%,85%)'],
-  deepfried: ['hsl(25,90%,50%)', 'hsl(40,80%,55%)', 'hsl(35,55%,85%)'],
-  ocean: ['hsl(200,80%,45%)', 'hsl(180,40%,50%)', 'hsl(200,30%,85%)'],
-  liquidglass: ['hsl(245,58%,56%)', 'hsl(170,45%,50%)', 'hsl(225,35%,88%)'],
+  dank: ['hsl(280,75%,50%)', 'hsl(300,60%,40%)', 'hsl(270,40%,92%)'],
+  retrowave: ['hsl(330,90%,52%)', 'hsl(190,70%,50%)', 'hsl(280,60%,6%)'],
+  pepe: ['hsl(145,70%,32%)', 'hsl(100,50%,45%)', 'hsl(130,35%,90%)'],
+  deepfried: ['hsl(22,95%,48%)', 'hsl(45,65%,50%)', 'hsl(38,50%,90%)'],
+  ocean: ['hsl(205,85%,42%)', 'hsl(175,50%,45%)', 'hsl(200,45%,90%)'],
+  liquidglass: ['hsl(250,65%,52%)', 'hsl(170,50%,45%)', 'hsl(225,35%,91%)'],
 };
 
 function ThemeSwatch({ themeId, isActive }: { themeId: ThemeId; isActive: boolean }) {
