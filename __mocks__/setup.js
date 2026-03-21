@@ -91,6 +91,17 @@ jest.mock('@/lib/meme-storage', () => ({
   deleteLocalImage: jest.fn(() => Promise.resolve()),
 }));
 
+// Mock theme-storage
+jest.mock('@/lib/theme-storage', () => ({
+  loadThemeId: jest.fn(() => Promise.resolve(null)),
+  saveThemeId: jest.fn(() => Promise.resolve()),
+}));
+
+// Mock nativewind vars
+jest.mock('nativewind', () => ({
+  vars: jest.fn((obj) => obj),
+}));
+
 // Mock safe area
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),

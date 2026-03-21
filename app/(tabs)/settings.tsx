@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Platform, ScrollView, Share, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, Share, View } from 'react-native';
 
 import {
   AlertDialog,
@@ -17,9 +17,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/Separator';
 import { Text } from '@/components/ui/Text';
 import { useMemeLibrary } from '@/context/MemeLibrary';
+import { useAppTheme } from '@/context/ThemeContext';
+import { cn } from '@/lib/utils';
+import { THEMES, THEME_IDS, type ThemeId } from '@/lib/themes';
+
+const THEME_PREVIEW_COLORS: Record<ThemeId, string[]> = {
+  default: ['hsl(0,0%,9%)', 'hsl(0,0%,45%)', 'hsl(0,0%,90%)'],
+  dank: ['hsl(270,70%,50%)', 'hsl(280,60%,40%)', 'hsl(270,30%,85%)'],
+  retrowave: ['hsl(330,85%,55%)', 'hsl(190,70%,50%)', 'hsl(280,45%,30%)'],
+  pepe: ['hsl(140,60%,35%)', 'hsl(100,40%,50%)', 'hsl(120,25%,85%)'],
+  deepfried: ['hsl(25,90%,50%)', 'hsl(40,80%,55%)', 'hsl(35,55%,85%)'],
+  ocean: ['hsl(200,80%,45%)', 'hsl(180,40%,50%)', 'hsl(200,30%,85%)'],
+  liquidglass: ['hsl(245,58%,56%)', 'hsl(170,45%,50%)', 'hsl(225,35%,88%)'],
+};
+
+function ThemeSwatch({ themeId, isActive }: { themeId: ThemeId; isActive: boolean }) {
+  const colors = THEME_PREVIEW_COLORS[themeId];
+  return (
+    <View className="flex-row gap-1">
+      {colors.map((color, i) => (
+        <View
+          key={i}
+          style={{ backgroundColor: color, width: 16, height: 16, borderRadius: 8 }}
+          className={cn(isActive && 'border-2 border-foreground')}
+        />
+      ))}
+    </View>
+  );
+}
 
 export default function SettingsScreen() {
   const { memes, destroyAll, exportData } = useMemeLibrary();
+  const { themeId, setTheme } = useAppTheme();
   const [isExporting, setIsExporting] = useState(false);
   const [isDestroying, setIsDestroying] = useState(false);
 
@@ -62,6 +91,40 @@ export default function SettingsScreen() {
         <Text variant="h3">Settings</Text>
       </View>
       <ScrollView className="flex-1" contentContainerClassName="px-4 gap-4 pb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>App Theme</CardTitle>
+            <CardDescription>Choose a color scheme for your meme library</CardDescription>
+          </CardHeader>
+          <CardContent className="gap-2">
+            {THEME_IDS.map((id) => {
+              const theme = THEMES[id];
+              const isActive = id === themeId;
+              return (
+                <Pressable
+                  key={id}
+                  testID={`theme-${id}`}
+                  onPress={() => setTheme(id)}
+                  className={cn(
+                    'flex-row items-center justify-between rounded-lg border border-border px-4 py-3',
+                    isActive && 'border-primary bg-accent',
+                  )}
+                >
+                  <View className="flex-1 gap-0.5">
+                    <Text className={cn('font-medium', isActive && 'text-primary')}>
+                      {theme.label}
+                    </Text>
+                    <Text variant="small" className="text-muted-foreground">
+                      {theme.description}
+                    </Text>
+                  </View>
+                  <ThemeSwatch themeId={id} isActive={isActive} />
+                </Pressable>
+              );
+            })}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Library Stats</CardTitle>
