@@ -59,7 +59,9 @@ export default function MemeLibraryScreen() {
   return (
     <View className="flex-1 bg-background">
       <View className="px-4 pb-3 pt-14">
-        <Text variant="h3">Meme Library</Text>
+        <Text variant="h3" className="font-bold text-primary">
+          Meme Library
+        </Text>
         <View className="flex-row items-center gap-2">
           <View className="relative flex-1">
             <View className="absolute left-3 top-0 z-10 h-full justify-center">
