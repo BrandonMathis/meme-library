@@ -20,9 +20,12 @@ export default function MemeDetailModal() {
   const { themeId } = useAppTheme();
   const colorScheme = useColorScheme();
   const colors = colorScheme === 'dark' ? THEMES[themeId].dark : THEMES[themeId].light;
-  const primaryColor = `hsl(${colors['--primary']})`;
-  const destructiveColor = `hsl(${colors['--destructive']})`;
-  const mutedForegroundColor = `hsl(${colors['--muted-foreground']})`;
+  // Theme HSL values are space-separated (e.g. "0 84.2% 60.2%").
+  // React Native needs comma-separated hsl(), so insert commas.
+  const hsl = (token: string) => `hsl(${token.replace(/ /g, ', ')})`;
+  const primaryColor = hsl(colors['--primary']);
+  const destructiveColor = hsl(colors['--destructive']);
+  const mutedForegroundColor = hsl(colors['--muted-foreground']);
 
   const meme = memes.find((m) => m.id === id);
   const [tags, setTags] = useState<string[]>(meme?.tags ?? []);
