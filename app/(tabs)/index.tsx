@@ -7,34 +7,28 @@ import { useRouter } from 'expo-router';
 import { Text } from '@/components/ui/Text';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { FilterMenuButton, type FilterOption } from '@/components/FilterMenuButton';
 import { useMemeLibrary, type MemeEntry } from '@/context/MemeLibrary';
-import { cn } from '@/lib/utils';
 
 const NUM_COLUMNS = 2;
 const GAP = 8;
 
-type FilterOption = 'all' | 'favorites';
-
-const FILTER_OPTIONS: { key: FilterOption; label: string }[] = [
+const FILTER_OPTIONS: FilterOption[] = [
   { key: 'all', label: 'All Memes' },
-  { key: 'favorites', label: 'Favorites' },
+  { key: 'favorites', label: 'Favorites', icon: 'heart.fill' },
 ];
 
 export default function MemeLibraryScreen() {
   const { memes } = useMemeLibrary();
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState<FilterOption>('all');
-  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { bottom } = useSafeAreaInsets();
 
   const TAB_BAR_HEIGHT = 49;
   const itemSize = (width - GAP * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
-
-  const isFilterActive = activeFilter !== 'all';
 
   const filtered = useMemo(() => {
     let result = memes;
@@ -83,23 +77,11 @@ export default function MemeLibraryScreen() {
       <View className="px-4 pb-3 pt-14">
         <View className="flex-row items-center justify-between">
           <Text variant="h3">Meme Library</Text>
-          <Button
-            variant="ghost"
-            size="icon"
-            onPress={() => setShowFilters((prev) => !prev)}
-            accessibilityLabel="Filter memes"
-            testID="filter-button"
-          >
-            <IconSymbol
-              name={
-                isFilterActive
-                  ? 'line.3.horizontal.decrease.circle.fill'
-                  : 'line.3.horizontal.decrease.circle'
-              }
-              size={22}
-              color={isFilterActive ? '#007AFF' : '#9ca3af'}
-            />
-          </Button>
+          <FilterMenuButton
+            options={FILTER_OPTIONS}
+            activeFilter={activeFilter}
+            onSelect={setActiveFilter}
+          />
         </View>
         <View className="flex-row items-center gap-2">
           <View className="relative flex-1">
@@ -114,33 +96,6 @@ export default function MemeLibraryScreen() {
             />
           </View>
         </View>
-        {showFilters && (
-          <View className="mt-2 flex-row gap-2" testID="filter-bar">
-            {FILTER_OPTIONS.map((option) => (
-              <Pressable
-                key={option.key}
-                onPress={() => setActiveFilter(option.key)}
-                testID={`filter-option-${option.key}`}
-              >
-                <Badge
-                  variant={activeFilter === option.key ? 'default' : 'outline'}
-                  className={cn('px-3 py-1', activeFilter === option.key && 'bg-primary')}
-                >
-                  <Text
-                    className={cn(
-                      'text-xs font-medium',
-                      activeFilter === option.key
-                        ? 'text-primary-foreground'
-                        : 'text-muted-foreground',
-                    )}
-                  >
-                    {option.label}
-                  </Text>
-                </Badge>
-              </Pressable>
-            ))}
-          </View>
-        )}
       </View>
 
       <FlatList

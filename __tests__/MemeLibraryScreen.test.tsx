@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 
 import { useMemeLibrary } from '@/context/MemeLibrary';
 
@@ -143,9 +143,7 @@ describe('MemeLibraryScreen', () => {
 
     const { getByPlaceholderText, getByText } = render(<MemeLibraryScreen />);
 
-    // Search to filter
     fireEvent.changeText(getByPlaceholderText('Search by tag...'), 'funny');
-    // Clear search
     fireEvent.changeText(getByPlaceholderText('Search by tag...'), '');
 
     expect(getByText('funny')).toBeTruthy();
@@ -160,7 +158,6 @@ describe('MemeLibraryScreen', () => {
 
     const { queryByText } = render(<MemeLibraryScreen />);
 
-    // The meme should render but no tag badges
     expect(queryByText('funny')).toBeNull();
   });
 
@@ -169,34 +166,39 @@ describe('MemeLibraryScreen', () => {
     expect(getByPlaceholderText('Search by tag...')).toBeTruthy();
   });
 
-  // Filter button tests
+  // Filter menu button tests
   it('renders the filter button', () => {
     const { getByTestId } = render(<MemeLibraryScreen />);
     expect(getByTestId('filter-button')).toBeTruthy();
   });
 
-  it('toggles filter bar visibility when filter button is pressed', () => {
-    const { getByTestId, queryByTestId } = render(<MemeLibraryScreen />);
-
-    // Filter bar should be hidden initially
-    expect(queryByTestId('filter-bar')).toBeNull();
-
-    // Press filter button to show
-    fireEvent.press(getByTestId('filter-button'));
-    expect(getByTestId('filter-bar')).toBeTruthy();
-
-    // Press again to hide
-    fireEvent.press(getByTestId('filter-button'));
-    expect(queryByTestId('filter-bar')).toBeNull();
-  });
-
-  it('shows filter options when filter bar is visible', () => {
+  it('opens filter menu when filter button is pressed', () => {
     const { getByTestId, getByText } = render(<MemeLibraryScreen />);
 
     fireEvent.press(getByTestId('filter-button'));
 
     expect(getByText('All Memes')).toBeTruthy();
     expect(getByText('Favorites')).toBeTruthy();
+  });
+
+  it('closes filter menu when backdrop is pressed', () => {
+    const { getByTestId, queryByTestId } = render(<MemeLibraryScreen />);
+
+    fireEvent.press(getByTestId('filter-button'));
+    expect(getByTestId('filter-option-all')).toBeTruthy();
+
+    fireEvent.press(getByTestId('filter-backdrop'));
+    expect(queryByTestId('filter-option-all')).toBeNull();
+  });
+
+  it('closes filter menu after selecting an option', () => {
+    const { getByTestId, queryByTestId } = render(<MemeLibraryScreen />);
+
+    fireEvent.press(getByTestId('filter-button'));
+    fireEvent.press(getByTestId('filter-option-favorites'));
+
+    // Menu should close after selection
+    expect(queryByTestId('filter-option-all')).toBeNull();
   });
 
   it('filters memes by favorites', () => {
@@ -210,7 +212,7 @@ describe('MemeLibraryScreen', () => {
 
     const { getByTestId, getByText, queryByText } = render(<MemeLibraryScreen />);
 
-    // Open filter bar and select Favorites
+    // Open menu and select Favorites
     fireEvent.press(getByTestId('filter-button'));
     fireEvent.press(getByTestId('filter-option-favorites'));
 
@@ -218,7 +220,22 @@ describe('MemeLibraryScreen', () => {
     expect(queryByText('dog')).toBeNull();
   });
 
-  it('shows all memes when All Memes filter is selected', () => {
+  it('shows active filter label on the morphed button', () => {
+    mockedUseMemeLibrary.mockReturnValue({
+      memes: [makeMeme({ id: '1', isFavorite: true })],
+      isLoading: false,
+    });
+
+    const { getByTestId, getByText } = render(<MemeLibraryScreen />);
+
+    fireEvent.press(getByTestId('filter-button'));
+    fireEvent.press(getByTestId('filter-option-favorites'));
+
+    // The button should now show the active filter label
+    expect(getByText('Favorites')).toBeTruthy();
+  });
+
+  it('shows all memes when switching back to All Memes filter', () => {
     mockedUseMemeLibrary.mockReturnValue({
       memes: [
         makeMeme({ id: '1', tags: ['funny'], isFavorite: true }),
@@ -229,9 +246,12 @@ describe('MemeLibraryScreen', () => {
 
     const { getByTestId, getByText } = render(<MemeLibraryScreen />);
 
-    // Open filter bar, select Favorites, then switch back to All
+    // Select Favorites
     fireEvent.press(getByTestId('filter-button'));
     fireEvent.press(getByTestId('filter-option-favorites'));
+
+    // Switch back to All
+    fireEvent.press(getByTestId('filter-button'));
     fireEvent.press(getByTestId('filter-option-all'));
 
     expect(getByText('funny')).toBeTruthy();
@@ -248,17 +268,13 @@ describe('MemeLibraryScreen', () => {
       isLoading: false,
     });
 
-    const { getByTestId, getByPlaceholderText, getByText, queryByText } = render(
-      <MemeLibraryScreen />,
-    );
+    const { getByTestId, getByPlaceholderText, queryByText } = render(<MemeLibraryScreen />);
 
     // Filter by favorites and search for "cat"
     fireEvent.press(getByTestId('filter-button'));
     fireEvent.press(getByTestId('filter-option-favorites'));
     fireEvent.changeText(getByPlaceholderText('Search by tag...'), 'cat');
 
-    // Only favorite memes with "cat" tag should show
-    // Meme 1 (favorite, has "cat") and Meme 3 (favorite, has "cat") match
     // Meme 2 (not favorite) should be excluded
     expect(queryByText('dog')).toBeNull();
   });
