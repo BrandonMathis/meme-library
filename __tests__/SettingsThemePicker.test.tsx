@@ -63,7 +63,7 @@ describe('Settings Theme Picker', () => {
       expect(getByText('Photo Settings')).toBeTruthy();
     });
 
-    expect(getByText('Delete from Camera Roll')).toBeTruthy();
+    expect(getByText('Save Space')).toBeTruthy();
     expect(getByTestId('delete-after-save-toggle')).toBeTruthy();
   });
 

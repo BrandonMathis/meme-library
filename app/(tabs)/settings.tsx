@@ -135,9 +135,9 @@ export default function SettingsScreen() {
           <CardContent>
             <View className="flex-row items-center justify-between">
               <View className="flex-1 gap-0.5 pr-4">
-                <Text className="font-medium">Delete from Camera Roll</Text>
+                <Text className="font-medium">Save Space</Text>
                 <Text variant="small" className="text-muted-foreground">
-                  Automatically remove the original photo from your device after saving it as a meme
+                  Automatically delete saved memes from photo library
                 </Text>
               </View>
               <Switch
