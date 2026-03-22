@@ -58,11 +58,8 @@ export default function MemeLibraryScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="px-4 pb-3 pt-14">
-        <Text
-          variant="h3"
-          className="font-bold text-primary-foreground bg-primary rounded-lg px-3 py-1 self-start"
-        >
+      <View className="bg-primary px-4 pb-3 pt-14">
+        <Text variant="h3" className="font-bold text-primary-foreground">
           Meme Library
         </Text>
         <View className="flex-row items-center gap-2">
