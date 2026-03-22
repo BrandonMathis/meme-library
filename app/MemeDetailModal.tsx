@@ -119,35 +119,39 @@ export default function MemeDetailModal() {
         contentContainerClassName="px-4 pb-8 pt-4"
       >
         <MemeModalContent uri={meme.uri} tags={tags} onTagsChange={setTags}>
-          <View className="mt-6 flex-row items-center justify-evenly">
+          <View className="mt-6 flex-row items-center justify-evenly gap-3">
             <Pressable
               onPress={handleShare}
-              className="items-center gap-1 rounded-xl px-5 py-3 active:bg-muted"
+              className="flex-1 items-center gap-1.5 rounded-2xl bg-primary px-4 py-3 active:opacity-80"
             >
-              <IconSymbol name="square.and.arrow.up" size={24} color={hsl('--primary')} />
-              <Text className="text-xs text-muted-foreground">Share</Text>
+              <IconSymbol
+                name="square.and.arrow.up"
+                size={22}
+                color={hsl('--primary-foreground')}
+              />
+              <Text className="text-xs font-medium text-primary-foreground">Share</Text>
             </Pressable>
 
             <Pressable
               onPress={handleFavorite}
-              className="items-center gap-1 rounded-xl px-5 py-3 active:bg-muted"
+              className="flex-1 items-center gap-1.5 rounded-2xl bg-secondary px-4 py-3 active:opacity-80"
             >
               <IconSymbol
                 name={meme.isFavorite ? 'heart.fill' : 'heart'}
-                size={24}
-                color={meme.isFavorite ? hsl('--destructive') : hsl('--muted-foreground')}
+                size={22}
+                color={hsl('--secondary-foreground')}
               />
-              <Text className="text-xs text-muted-foreground">
+              <Text className="text-xs font-medium text-secondary-foreground">
                 {meme.isFavorite ? 'Unfavorite' : 'Favorite'}
               </Text>
             </Pressable>
 
             <Pressable
               onPress={handleDelete}
-              className="items-center gap-1 rounded-xl px-5 py-3 active:bg-muted"
+              className="flex-1 items-center gap-1.5 rounded-2xl bg-destructive px-4 py-3 active:opacity-80"
             >
-              <IconSymbol name="trash.fill" size={24} color={hsl('--destructive')} />
-              <Text className="text-xs text-muted-foreground">Delete</Text>
+              <IconSymbol name="trash.fill" size={22} color={hsl('--destructive-foreground')} />
+              <Text className="text-xs font-medium text-destructive-foreground">Delete</Text>
             </Pressable>
           </View>
         </MemeModalContent>
