@@ -380,12 +380,11 @@ jobs:
         id: deploy
         run: |
           ALIAS="pr-${{ github.event.pull_request.number }}"
-          DEPLOY_OUTPUT=$(eas deploy --alias "$ALIAS" --non-interactive --json 2>/dev/null)
-          echo "deploy_output=$DEPLOY_OUTPUT" >> "$GITHUB_OUTPUT"
-          DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | jq -r '.deploymentUrl // .url // empty')
-          ALIAS_URL=$(echo "$DEPLOY_OUTPUT" | jq -r '.aliasUrl // empty')
-          DASHBOARD_URL=$(echo "$DEPLOY_OUTPUT" | jq -r '.dashboardUrl // empty')
-          DEPLOY_ID=$(echo "$DEPLOY_OUTPUT" | jq -r '.id // .deploymentIdentifier // empty')
+          eas deploy --alias "$ALIAS" --non-interactive --json > deploy-output.json 2>/dev/null
+          DEPLOY_URL=$(jq -r '.deploymentUrl // .url // empty' deploy-output.json)
+          ALIAS_URL=$(jq -r '.aliasUrl // empty' deploy-output.json)
+          DASHBOARD_URL=$(jq -r '.dashboardUrl // empty' deploy-output.json)
+          DEPLOY_ID=$(jq -r '.id // .deploymentIdentifier // empty' deploy-output.json)
           # Use alias URL if available, otherwise deployment URL
           PREVIEW_URL="${ALIAS_URL:-$DEPLOY_URL}"
           echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
