@@ -6,11 +6,13 @@ import { MemeModalContent } from '@/components/MemeModalContent';
 import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { useMemeLibrary } from '@/context/MemeLibrary';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export default function AddMemeModal() {
   const { uri } = useLocalSearchParams<{ uri: string }>();
   const router = useRouter();
   const { addMeme } = useMemeLibrary();
+  const { themeVars } = useThemeColors();
 
   const [tags, setTags] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -56,6 +58,7 @@ export default function AddMemeModal() {
 
       <ScrollView
         className="flex-1 bg-background"
+        style={themeVars}
         keyboardShouldPersistTaps="handled"
         contentContainerClassName="px-4 pb-8 pt-4"
       >

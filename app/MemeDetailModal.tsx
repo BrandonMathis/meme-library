@@ -16,7 +16,7 @@ export default function MemeDetailModal() {
   const router = useRouter();
   const { memes, editTags, deleteMeme, toggleFavorite } = useMemeLibrary();
 
-  const { hsl } = useThemeColors();
+  const { hsl, themeVars } = useThemeColors();
   const meme = memes.find((m) => m.id === id);
   const [tags, setTags] = useState<string[]>(meme?.tags ?? []);
 
@@ -114,6 +114,7 @@ export default function MemeDetailModal() {
 
       <ScrollView
         className="flex-1 bg-background"
+        style={themeVars}
         keyboardShouldPersistTaps="handled"
         contentContainerClassName="px-4 pb-8 pt-4"
       >
