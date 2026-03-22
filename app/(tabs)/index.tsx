@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useMemeLibrary, type MemeEntry } from '@/context/MemeLibrary';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const NUM_COLUMNS = 2;
 const GAP = 8;
@@ -19,6 +20,7 @@ export default function MemeLibraryScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { bottom } = useSafeAreaInsets();
+  const { hsl } = useThemeColors();
 
   const TAB_BAR_HEIGHT = 49;
   const itemSize = (width - GAP * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
@@ -63,7 +65,7 @@ export default function MemeLibraryScreen() {
         <View className="flex-row items-center gap-2">
           <View className="relative flex-1">
             <View className="absolute left-3 top-0 z-10 h-full justify-center">
-              <IconSymbol name="magnifyingglass" size={16} color="#9ca3af" />
+              <IconSymbol name="magnifyingglass" size={16} color={hsl('--muted-foreground')} />
             </View>
             <Input
               placeholder="Search by tag..."

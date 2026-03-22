@@ -13,9 +13,11 @@ import Animated, {
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Text } from '@/components/ui/Text';
 import { useMemeLibrary } from '@/context/MemeLibrary';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export function SuccessAnimation() {
   const { lastAddedId, clearLastAdded } = useMemeLibrary();
+  const { hsl } = useThemeColors();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.5);
 
@@ -49,11 +51,11 @@ export function SuccessAnimation() {
   return (
     <View style={styles.overlay} pointerEvents="none">
       <Animated.View
-        style={animatedStyle}
-        className="items-center rounded-3xl bg-black/70 px-10 py-8"
+        style={[animatedStyle, { backgroundColor: hsl('--primary') }]}
+        className="items-center rounded-3xl px-10 py-8"
       >
-        <IconSymbol name="checkmark.circle.fill" size={56} color="white" />
-        <Text className="mt-3 text-lg font-semibold text-white">Meme Saved!</Text>
+        <IconSymbol name="checkmark.circle.fill" size={56} color={hsl('--primary-foreground')} />
+        <Text className="mt-3 text-lg font-semibold text-primary-foreground">Meme Saved!</Text>
       </Animated.View>
     </View>
   );

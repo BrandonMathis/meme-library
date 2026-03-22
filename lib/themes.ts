@@ -21,6 +21,7 @@ export type ThemeColors = {
   '--accent': string;
   '--accent-foreground': string;
   '--destructive': string;
+  '--destructive-foreground': string;
   '--border': string;
   '--input': string;
   '--ring': string;
@@ -45,49 +46,51 @@ export const THEME_IDS = [
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-/** Default (shadcn neutral) — already defined in global.css, kept here for completeness */
+/** Default — bold violet primary with clean neutral surfaces */
 const defaultTheme: ThemeDefinition = {
   label: 'Default',
-  description: 'Clean neutral theme',
+  description: 'Bold violet with clean neutrals',
   light: {
-    '--background': '0 0% 100%',
-    '--foreground': '0 0% 3.9%',
+    '--background': '0 0% 98%',
+    '--foreground': '240 10% 6%',
     '--card': '0 0% 100%',
-    '--card-foreground': '0 0% 3.9%',
+    '--card-foreground': '240 10% 6%',
     '--popover': '0 0% 100%',
-    '--popover-foreground': '0 0% 3.9%',
-    '--primary': '0 0% 9%',
-    '--primary-foreground': '0 0% 98%',
-    '--secondary': '0 0% 96.1%',
-    '--secondary-foreground': '0 0% 9%',
-    '--muted': '0 0% 96.1%',
-    '--muted-foreground': '0 0% 45.1%',
-    '--accent': '0 0% 96.1%',
-    '--accent-foreground': '0 0% 9%',
-    '--destructive': '0 84.2% 60.2%',
-    '--border': '0 0% 89.8%',
-    '--input': '0 0% 89.8%',
-    '--ring': '0 0% 63%',
+    '--popover-foreground': '240 10% 6%',
+    '--primary': '262 83% 58%',
+    '--primary-foreground': '0 0% 100%',
+    '--secondary': '240 5% 90%',
+    '--secondary-foreground': '240 6% 10%',
+    '--muted': '240 5% 94%',
+    '--muted-foreground': '240 4% 46%',
+    '--accent': '262 50% 93%',
+    '--accent-foreground': '240 6% 10%',
+    '--destructive': '0 84% 60%',
+    '--destructive-foreground': '0 0% 100%',
+    '--border': '240 6% 90%',
+    '--input': '240 6% 90%',
+    '--ring': '262 83% 58%',
   },
   dark: {
-    '--background': '0 0% 3.9%',
+    '--background': '240 10% 4%',
     '--foreground': '0 0% 98%',
-    '--card': '0 0% 3.9%',
+    '--card': '240 10% 7%',
     '--card-foreground': '0 0% 98%',
-    '--popover': '0 0% 3.9%',
+    '--popover': '240 10% 7%',
     '--popover-foreground': '0 0% 98%',
-    '--primary': '0 0% 98%',
-    '--primary-foreground': '0 0% 9%',
-    '--secondary': '0 0% 14.9%',
+    '--primary': '262 83% 65%',
+    '--primary-foreground': '0 0% 100%',
+    '--secondary': '240 4% 16%',
     '--secondary-foreground': '0 0% 98%',
-    '--muted': '0 0% 14.9%',
-    '--muted-foreground': '0 0% 63.9%',
-    '--accent': '0 0% 14.9%',
+    '--muted': '240 4% 16%',
+    '--muted-foreground': '240 5% 55%',
+    '--accent': '262 40% 18%',
     '--accent-foreground': '0 0% 98%',
-    '--destructive': '0 70.9% 59.4%',
-    '--border': '0 0% 14.9%',
-    '--input': '0 0% 14.9%',
-    '--ring': '300 0% 45%',
+    '--destructive': '0 72% 51%',
+    '--destructive-foreground': '0 0% 98%',
+    '--border': '240 4% 16%',
+    '--input': '240 4% 16%',
+    '--ring': '262 83% 65%',
   },
 };
 
@@ -111,9 +114,10 @@ const dankTheme: ThemeDefinition = {
     '--secondary-foreground': '0 0% 100%',
     '--muted': '270 45% 72%',
     '--muted-foreground': '270 50% 28%',
-    '--accent': '310 70% 72%',
+    '--accent': '290 50% 88%',
     '--accent-foreground': '280 80% 10%',
     '--destructive': '0 90% 50%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '270 50% 65%',
     '--input': '270 50% 68%',
     '--ring': '290 100% 45%',
@@ -131,9 +135,10 @@ const dankTheme: ThemeDefinition = {
     '--secondary-foreground': '280 40% 90%',
     '--muted': '272 50% 18%',
     '--muted-foreground': '275 30% 52%',
-    '--accent': '310 65% 32%',
+    '--accent': '290 45% 20%',
     '--accent-foreground': '280 40% 92%',
     '--destructive': '0 80% 55%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '272 50% 24%',
     '--input': '272 50% 20%',
     '--ring': '290 100% 62%',
@@ -142,7 +147,7 @@ const dankTheme: ThemeDefinition = {
 
 /**
  * Retro Wave — hot pink & cyan synthwave.
- * Deep magenta bg, screaming neon pink primary, electric cyan accents.
+ * Deep magenta bg, screaming neon pink primary, electric cyan secondary.
  */
 const retrowaveTheme: ThemeDefinition = {
   label: 'Retro Wave',
@@ -160,9 +165,10 @@ const retrowaveTheme: ThemeDefinition = {
     '--secondary-foreground': '200 90% 10%',
     '--muted': '320 45% 72%',
     '--muted-foreground': '300 40% 25%',
-    '--accent': '185 75% 62%',
-    '--accent-foreground': '200 90% 10%',
+    '--accent': '335 60% 90%',
+    '--accent-foreground': '280 70% 8%',
     '--destructive': '0 90% 48%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '325 50% 65%',
     '--input': '325 45% 68%',
     '--ring': '335 100% 50%',
@@ -180,9 +186,10 @@ const retrowaveTheme: ThemeDefinition = {
     '--secondary-foreground': '185 60% 88%',
     '--muted': '280 55% 16%',
     '--muted-foreground': '325 25% 52%',
-    '--accent': '185 90% 30%',
-    '--accent-foreground': '185 60% 92%',
+    '--accent': '335 50% 18%',
+    '--accent-foreground': '330 30% 92%',
     '--destructive': '0 80% 52%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '280 55% 22%',
     '--input': '280 55% 18%',
     '--ring': '335 100% 58%',
@@ -191,7 +198,7 @@ const retrowaveTheme: ThemeDefinition = {
 
 /**
  * Pepe Green — bold meme-culture greens.
- * Rich green bg, vivid emerald primary, lime accents, dark forest darks.
+ * Rich green bg, vivid emerald primary, lime secondary, forest accents.
  */
 const pepeTheme: ThemeDefinition = {
   label: 'Pepe Green',
@@ -209,9 +216,10 @@ const pepeTheme: ThemeDefinition = {
     '--secondary-foreground': '150 80% 8%',
     '--muted': '135 40% 68%',
     '--muted-foreground': '150 50% 22%',
-    '--accent': '80 65% 58%',
+    '--accent': '150 40% 88%',
     '--accent-foreground': '150 70% 6%',
     '--destructive': '0 90% 48%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '140 45% 58%',
     '--input': '140 40% 62%',
     '--ring': '150 80% 28%',
@@ -229,9 +237,10 @@ const pepeTheme: ThemeDefinition = {
     '--secondary-foreground': '130 30% 88%',
     '--muted': '148 45% 15%',
     '--muted-foreground': '135 25% 48%',
-    '--accent': '95 55% 25%',
+    '--accent': '140 40% 14%',
     '--accent-foreground': '130 30% 90%',
     '--destructive': '0 80% 52%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '148 45% 22%',
     '--input': '148 45% 18%',
     '--ring': '140 85% 40%',
@@ -240,7 +249,7 @@ const pepeTheme: ThemeDefinition = {
 
 /**
  * Deep Fried — scorching amber/orange with crunchy red accents.
- * Golden-orange bg, blazing orange-red primary, warm yellow highlights.
+ * Golden-orange bg, blazing orange-red primary, warm yellow secondary.
  */
 const deepfriedTheme: ThemeDefinition = {
   label: 'Deep Fried',
@@ -258,9 +267,10 @@ const deepfriedTheme: ThemeDefinition = {
     '--secondary-foreground': '15 80% 10%',
     '--muted': '35 50% 68%',
     '--muted-foreground': '20 55% 24%',
-    '--accent': '50 85% 55%',
+    '--accent': '20 60% 90%',
     '--accent-foreground': '15 70% 8%',
     '--destructive': '0 95% 42%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '30 55% 58%',
     '--input': '30 50% 62%',
     '--ring': '15 100% 45%',
@@ -278,9 +288,10 @@ const deepfriedTheme: ThemeDefinition = {
     '--secondary-foreground': '40 35% 88%',
     '--muted': '18 45% 15%',
     '--muted-foreground': '35 25% 48%',
-    '--accent': '45 65% 28%',
+    '--accent': '20 45% 16%',
     '--accent-foreground': '40 35% 90%',
     '--destructive': '0 85% 48%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '18 45% 22%',
     '--input': '18 45% 18%',
     '--ring': '20 100% 50%',
@@ -289,7 +300,7 @@ const deepfriedTheme: ThemeDefinition = {
 
 /**
  * Ocean Breeze — bold blue/teal with coral accents.
- * Deep ocean-blue bg, bright cerulean primary, teal surfaces, coral destructive.
+ * Deep ocean-blue bg, bright cerulean primary, teal secondary.
  */
 const oceanTheme: ThemeDefinition = {
   label: 'Ocean Breeze',
@@ -307,9 +318,10 @@ const oceanTheme: ThemeDefinition = {
     '--secondary-foreground': '210 80% 8%',
     '--muted': '205 45% 68%',
     '--muted-foreground': '215 50% 22%',
-    '--accent': '170 70% 52%',
+    '--accent': '210 50% 90%',
     '--accent-foreground': '215 70% 6%',
     '--destructive': '0 90% 48%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '205 50% 58%',
     '--input': '205 45% 62%',
     '--ring': '210 95% 38%',
@@ -327,9 +339,10 @@ const oceanTheme: ThemeDefinition = {
     '--secondary-foreground': '190 30% 88%',
     '--muted': '215 45% 15%',
     '--muted-foreground': '200 22% 48%',
-    '--accent': '175 60% 24%',
-    '--accent-foreground': '190 30% 92%',
+    '--accent': '210 40% 16%',
+    '--accent-foreground': '200 30% 90%',
     '--destructive': '0 80% 52%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '215 48% 22%',
     '--input': '215 48% 18%',
     '--ring': '200 95% 48%',
@@ -338,7 +351,7 @@ const oceanTheme: ThemeDefinition = {
 
 /**
  * Liquid Glass — Apple-inspired indigo/purple with mint-teal highlights.
- * Steel-blue bg, vivid indigo primary, bright mint accents on every surface.
+ * Steel-blue bg, vivid indigo primary, bright mint secondary.
  */
 const liquidglassTheme: ThemeDefinition = {
   label: 'Liquid Glass',
@@ -356,9 +369,10 @@ const liquidglassTheme: ThemeDefinition = {
     '--secondary-foreground': '235 70% 8%',
     '--muted': '228 35% 70%',
     '--muted-foreground': '235 40% 25%',
-    '--accent': '168 60% 58%',
+    '--accent': '255 40% 91%',
     '--accent-foreground': '235 60% 8%',
     '--destructive': '0 90% 48%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '228 40% 62%',
     '--input': '228 38% 65%',
     '--ring': '255 80% 50%',
@@ -376,9 +390,10 @@ const liquidglassTheme: ThemeDefinition = {
     '--secondary-foreground': '168 30% 88%',
     '--muted': '232 40% 16%',
     '--muted-foreground': '228 22% 50%',
-    '--accent': '168 55% 26%',
-    '--accent-foreground': '168 30% 92%',
+    '--accent': '255 35% 18%',
+    '--accent-foreground': '228 28% 90%',
     '--destructive': '0 80% 52%',
+    '--destructive-foreground': '0 0% 100%',
     '--border': '232 42% 22%',
     '--input': '232 42% 18%',
     '--ring': '255 85% 62%',

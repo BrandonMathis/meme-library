@@ -9,12 +9,14 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useMemeLibrary } from '@/context/MemeLibrary';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export default function MemeDetailModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { memes, editTags, deleteMeme, toggleFavorite } = useMemeLibrary();
 
+  const { hsl } = useThemeColors();
   const meme = memes.find((m) => m.id === id);
   const [tags, setTags] = useState<string[]>(meme?.tags ?? []);
 
@@ -121,7 +123,7 @@ export default function MemeDetailModal() {
               onPress={handleShare}
               className="items-center gap-1 rounded-xl px-5 py-3 active:bg-muted"
             >
-              <IconSymbol name="square.and.arrow.up" size={24} color="#3b82f6" />
+              <IconSymbol name="square.and.arrow.up" size={24} color={hsl('--primary')} />
               <Text className="text-xs text-muted-foreground">Share</Text>
             </Pressable>
 
@@ -132,7 +134,7 @@ export default function MemeDetailModal() {
               <IconSymbol
                 name={meme.isFavorite ? 'heart.fill' : 'heart'}
                 size={24}
-                color={meme.isFavorite ? '#ef4444' : '#f97316'}
+                color={meme.isFavorite ? hsl('--destructive') : hsl('--muted-foreground')}
               />
               <Text className="text-xs text-muted-foreground">
                 {meme.isFavorite ? 'Unfavorite' : 'Favorite'}
@@ -143,7 +145,7 @@ export default function MemeDetailModal() {
               onPress={handleDelete}
               className="items-center gap-1 rounded-xl px-5 py-3 active:bg-muted"
             >
-              <IconSymbol name="trash.fill" size={24} color="#ef4444" />
+              <IconSymbol name="trash.fill" size={24} color={hsl('--destructive')} />
               <Text className="text-xs text-muted-foreground">Delete</Text>
             </Pressable>
           </View>

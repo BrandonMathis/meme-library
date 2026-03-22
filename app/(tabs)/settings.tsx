@@ -22,8 +22,8 @@ import { cn } from '@/lib/utils';
 import { THEMES, THEME_IDS, type ThemeId } from '@/lib/themes';
 
 const THEME_PREVIEW_COLORS: Record<ThemeId, string[]> = {
-  default: ['hsl(0,0%,9%)', 'hsl(0,0%,45%)', 'hsl(0,0%,96%)'],
-  dank: ['hsl(290,100%,45%)', 'hsl(310,70%,72%)', 'hsl(272,60%,78%)'],
+  default: ['hsl(262,83%,58%)', 'hsl(240,5%,90%)', 'hsl(0,0%,98%)'],
+  dank: ['hsl(290,100%,45%)', 'hsl(265,55%,68%)', 'hsl(272,60%,78%)'],
   retrowave: ['hsl(335,100%,50%)', 'hsl(185,80%,55%)', 'hsl(325,55%,78%)'],
   pepe: ['hsl(150,80%,28%)', 'hsl(95,55%,60%)', 'hsl(135,50%,75%)'],
   deepfried: ['hsl(15,100%,45%)', 'hsl(45,80%,58%)', 'hsl(35,65%,75%)'],
@@ -174,7 +174,7 @@ export default function SettingsScreen() {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button className="mt-2" variant="destructive" disabled={memes.length === 0}>
-                    <Text className="text-white">Delete All Memes</Text>
+                    <Text className="text-destructive-foreground">Delete All Memes</Text>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -195,7 +195,7 @@ export default function SettingsScreen() {
                       onPress={handleDestroy}
                       disabled={isDestroying}
                     >
-                      <Text className="text-white">
+                      <Text className="text-destructive-foreground">
                         {isDestroying ? 'Deleting...' : 'Delete Everything'}
                       </Text>
                     </AlertDialogAction>
