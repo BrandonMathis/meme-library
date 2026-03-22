@@ -11,6 +11,7 @@ import { PortalHost } from '@rn-primitives/portal';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MemeLibraryProvider } from '@/context/MemeLibrary';
+import { SettingsProvider } from '@/context/SettingsContext';
 import { AppThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { SuccessAnimation } from '@/components/SuccessAnimation';
 import { THEMES, buildNavColors } from '@/lib/themes';
@@ -76,10 +77,12 @@ function InnerLayout() {
 
 export default function RootLayout() {
   return (
-    <MemeLibraryProvider>
-      <AppThemeProvider>
-        <InnerLayout />
-      </AppThemeProvider>
-    </MemeLibraryProvider>
+    <SettingsProvider>
+      <MemeLibraryProvider>
+        <AppThemeProvider>
+          <InnerLayout />
+        </AppThemeProvider>
+      </MemeLibraryProvider>
+    </SettingsProvider>
   );
 }

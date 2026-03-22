@@ -23,14 +23,16 @@ function fetchPhotos() {
 // Only primitive props so React.memo shallow comparison is bulletproof
 const PhotoItem = memo(function PhotoItem({
   uri,
+  assetId,
   size,
   onPress,
 }: {
   uri: string;
+  assetId: string;
   size: number;
-  onPress: (uri: string) => void;
+  onPress: (uri: string, assetId: string) => void;
 }) {
-  const handlePress = useCallback(() => onPress(uri), [uri, onPress]);
+  const handlePress = useCallback(() => onPress(uri, assetId), [uri, assetId, onPress]);
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
       <Image source={{ uri }} style={{ width: size, height: size, margin: GAP / 2 }} />
@@ -107,15 +109,15 @@ export default function AddMemeScreen() {
   const routerRef = useRef(router);
   routerRef.current = router;
 
-  const handlePhotoPress = useCallback((uri: string) => {
-    routerRef.current.push({ pathname: '/AddMemeModal', params: { uri } });
+  const handlePhotoPress = useCallback((uri: string, assetId: string) => {
+    routerRef.current.push({ pathname: '/AddMemeModal', params: { uri, assetId } });
   }, []);
 
   const keyExtractor = useCallback((item: MediaLibrary.Asset) => item.id, []);
 
   const renderItem = useCallback(
     ({ item }: { item: MediaLibrary.Asset }) => (
-      <PhotoItem uri={item.uri} size={imageSize} onPress={handlePhotoPress} />
+      <PhotoItem uri={item.uri} assetId={item.id} size={imageSize} onPress={handlePhotoPress} />
     ),
     [imageSize, handlePhotoPress],
   );

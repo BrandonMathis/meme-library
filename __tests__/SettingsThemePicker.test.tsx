@@ -3,16 +3,19 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 
 import SettingsScreen from '@/app/(tabs)/settings';
 import { MemeLibraryProvider } from '@/context/MemeLibrary';
+import { SettingsProvider } from '@/context/SettingsContext';
 import { AppThemeProvider } from '@/context/ThemeContext';
 import { THEME_IDS, THEMES } from '@/lib/themes';
 
 function renderSettings() {
   return render(
-    <MemeLibraryProvider>
-      <AppThemeProvider>
-        <SettingsScreen />
-      </AppThemeProvider>
-    </MemeLibraryProvider>,
+    <SettingsProvider>
+      <MemeLibraryProvider>
+        <AppThemeProvider>
+          <SettingsScreen />
+        </AppThemeProvider>
+      </MemeLibraryProvider>
+    </SettingsProvider>,
   );
 }
 
@@ -51,5 +54,30 @@ describe('Settings Theme Picker', () => {
 
     expect(getByTestId('theme-liquidglass')).toBeTruthy();
     expect(getByText('Translucent blue-purple-mint aero')).toBeTruthy();
+  });
+
+  it('renders the delete-after-save toggle', async () => {
+    const { getByTestId, getByText } = renderSettings();
+
+    await waitFor(() => {
+      expect(getByText('Photo Settings')).toBeTruthy();
+    });
+
+    expect(getByText('Delete from Camera Roll')).toBeTruthy();
+    expect(getByTestId('delete-after-save-toggle')).toBeTruthy();
+  });
+
+  it('toggles delete-after-save setting', async () => {
+    const { getByTestId, getByText } = renderSettings();
+
+    await waitFor(() => {
+      expect(getByText('Photo Settings')).toBeTruthy();
+    });
+
+    const toggle = getByTestId('delete-after-save-toggle');
+    expect(toggle.props.value).toBe(false);
+
+    fireEvent(toggle, 'valueChange', true);
+    expect(toggle.props.value).toBe(true);
   });
 });
