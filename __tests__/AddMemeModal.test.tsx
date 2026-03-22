@@ -19,7 +19,7 @@ jest.mock('expo-router', () => ({
     back: jest.fn(),
     replace: jest.fn(),
   }),
-  useLocalSearchParams: () => ({ uri: 'file://photo.jpg' }),
+  useLocalSearchParams: () => ({ uri: 'file://photo.jpg', assetId: 'asset-123' }),
   Stack: {
     Screen: ({ options }: { options: Record<string, unknown> }) => {
       const { View } = require('react-native');
@@ -72,7 +72,7 @@ describe('AddMemeModal', () => {
       fireEvent.press(getByText('Save'));
     });
 
-    expect(mockAddMeme).toHaveBeenCalledWith('file://photo.jpg', ['funny']);
+    expect(mockAddMeme).toHaveBeenCalledWith('file://photo.jpg', ['funny'], 'asset-123');
     expect(mockDismiss).toHaveBeenCalled();
   });
 
@@ -83,7 +83,7 @@ describe('AddMemeModal', () => {
       fireEvent.press(getByText('Save'));
     });
 
-    expect(mockAddMeme).toHaveBeenCalledWith('file://photo.jpg', []);
+    expect(mockAddMeme).toHaveBeenCalledWith('file://photo.jpg', [], 'asset-123');
     expect(mockDismiss).toHaveBeenCalled();
   });
 
@@ -100,7 +100,7 @@ describe('AddMemeModal', () => {
       fireEvent.press(getByText('Save'));
     });
 
-    expect(mockAddMeme).toHaveBeenCalledWith('file://photo.jpg', ['funny', 'cat']);
+    expect(mockAddMeme).toHaveBeenCalledWith('file://photo.jpg', ['funny', 'cat'], 'asset-123');
   });
 
   it('can remove a tag before saving', async () => {
@@ -119,7 +119,7 @@ describe('AddMemeModal', () => {
       fireEvent.press(getByText('Save'));
     });
 
-    expect(mockAddMeme).toHaveBeenCalledWith('file://photo.jpg', ['cat']);
+    expect(mockAddMeme).toHaveBeenCalledWith('file://photo.jpg', ['cat'], 'asset-123');
   });
 
   it('prevents double-save while saving is in progress', async () => {

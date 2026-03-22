@@ -1,8 +1,10 @@
 import React from 'react';
-import { Text, Pressable } from 'react-native';
+import { Platform, Text, Pressable } from 'react-native';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import * as MediaLibrary from 'expo-media-library';
 
 import { MemeLibraryProvider, useMemeLibrary } from '@/context/MemeLibrary';
+import { SettingsProvider } from '@/context/SettingsContext';
 import {
   getAllMemes,
   insertMeme,
@@ -14,6 +16,7 @@ import {
   copyImageToLocal,
   deleteLocalImage,
 } from '@/lib/meme-storage';
+import { loadDeleteAfterSave } from '@/lib/settings-storage';
 
 const mockedGetAllMemes = getAllMemes as jest.Mock;
 const mockedInsertMeme = insertMeme as jest.Mock;
@@ -46,6 +49,10 @@ function TestConsumer() {
       <Text testID="memes">{JSON.stringify(memes)}</Text>
       <Text testID="last-added">{lastAddedId ?? 'null'}</Text>
       <Pressable testID="add-meme" onPress={() => addMeme('file://photo.jpg', ['funny', 'cat'])} />
+      <Pressable
+        testID="add-meme-with-asset"
+        onPress={() => addMeme('file://photo.jpg', ['funny'], 'asset-123')}
+      />
       <Pressable testID="delete-meme" onPress={() => memes[0] && deleteMeme(memes[0].id)} />
       <Pressable
         testID="edit-tags"
@@ -61,9 +68,11 @@ function TestConsumer() {
 
 function renderWithProvider() {
   return render(
-    <MemeLibraryProvider>
-      <TestConsumer />
-    </MemeLibraryProvider>,
+    <SettingsProvider>
+      <MemeLibraryProvider>
+        <TestConsumer />
+      </MemeLibraryProvider>
+    </SettingsProvider>,
   );
 }
 
@@ -269,5 +278,39 @@ describe('MemeLibraryContext', () => {
     // New meme should be first
     expect(memes[0].tags).toEqual(['funny', 'cat']);
     expect(memes[1].tags).toEqual(['first']);
+  });
+
+  it('does not delete from camera roll when setting is off', async () => {
+    const { getByTestId } = renderWithProvider();
+
+    await waitFor(() => {
+      expect(getByTestId('loading').props.children).toBe('false');
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('add-meme-with-asset'));
+    });
+
+    expect(MediaLibrary.deleteAssetsAsync).not.toHaveBeenCalled();
+  });
+
+  it('deletes from camera roll when setting is on and assetId is provided', async () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'ios';
+    (loadDeleteAfterSave as jest.Mock).mockResolvedValue(true);
+
+    const { getByTestId } = renderWithProvider();
+
+    await waitFor(() => {
+      expect(getByTestId('loading').props.children).toBe('false');
+    });
+
+    await act(async () => {
+      fireEvent.press(getByTestId('add-meme-with-asset'));
+    });
+
+    expect(MediaLibrary.deleteAssetsAsync).toHaveBeenCalledWith(['asset-123']);
+
+    Platform.OS = originalOS;
   });
 });
