@@ -97,31 +97,15 @@ jobs:
 
             **Open in Expo Go:** ⏳ _Pending…_
 
-            > **Update Branch:** `pr-${{ github.event.pull_request.number }}`
+            ---
+
+            ## 🌐 Web Preview
+
+            ⏳ **Deploying web preview…** A link will appear here once the deployment is complete.
+
             > **Commit:** ${{ github.event.pull_request.head.sha }}
             >
-            > Waiting for lint, tests, and EAS update to finish…
-
-  web-export:
-    name: Web Export Check
-    needs: lint
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Export for web
-        run: npx expo export --platform web
+            > Waiting for lint, tests, and EAS deploy to finish…
 
   eas-update:
     name: EAS Update
@@ -242,7 +226,7 @@ jobs:
             echo "$CODE_CHANGES"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "No code changes detected, skipping EAS update"
+            echo "No code changes detected, skipping preview"
           fi
 
       - name: Setup Node
@@ -263,7 +247,7 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         run: npm ci
 
-      - name: Publish update
+      - name: Publish Expo Go update
         if: steps.changes.outputs.has_changes == 'true'
         id: eas-update
         run: |
@@ -288,6 +272,26 @@ jobs:
           echo "qr_url=$QR_URL" >> "$GITHUB_OUTPUT"
           echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
+      - name: Export for web
+        if: steps.changes.outputs.has_changes == 'true'
+        run: npx expo export --platform web
+
+      - name: Deploy web preview to EAS Hosting
+        if: steps.changes.outputs.has_changes == 'true'
+        id: web-deploy
+        run: |
+          ALIAS="pr-${{ github.event.pull_request.number }}"
+          eas deploy --alias "$ALIAS" --non-interactive --json > deploy-output.json 2>/dev/null
+          DEPLOY_URL=$(jq -r '.deploymentUrl // .url // empty' deploy-output.json)
+          ALIAS_URL=$(jq -r '.aliasUrl // empty' deploy-output.json)
+          DASHBOARD_URL=$(jq -r '.dashboardUrl // empty' deploy-output.json)
+          DEPLOY_ID=$(jq -r '.id // .deploymentIdentifier // empty' deploy-output.json)
+          PREVIEW_URL="${ALIAS_URL:-$DEPLOY_URL}"
+          echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+          echo "deploy_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "dashboard_url=$DASHBOARD_URL" >> "$GITHUB_OUTPUT"
+          echo "Web preview deployed to: $PREVIEW_URL"
+
       - name: Comment on PR
         if: steps.changes.outputs.has_changes == 'true'
         uses: marocchino/sticky-pull-request-comment@v2
@@ -304,5 +308,108 @@ jobs:
 
             **Or open directly:** [Open in Expo Go](${{ steps.qr.outputs.preview_url }})
 
-            > Update branch: `${{ steps.eas-update.outputs.branch }}`
-            > Updated on: ${{ github.event.pull_request.head.sha }}
+            > **Update branch:** `${{ steps.eas-update.outputs.branch }}`
+            > **Commit:** ${{ github.event.pull_request.head.sha }}
+
+            ---
+
+            ## 🌐 Web Preview
+
+            This PR has a live **web preview** deployed via EAS Hosting.
+
+            **[Open Web Preview](${{ steps.web-deploy.outputs.preview_url }})**
+
+            > **Alias:** `pr-${{ github.event.pull_request.number }}`
+            > **Deployment URL:** ${{ steps.web-deploy.outputs.deploy_url }}
+            > **Commit:** ${{ github.event.pull_request.head.sha }}
+            > **Dashboard:** [View in EAS Dashboard](${{ steps.web-deploy.outputs.dashboard_url }})
+
+      - name: Comment no changes
+        if: steps.changes.outputs.has_changes != 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: expo-preview
+          message: |
+            ## 📱 Expo Go Preview
+
+            No code changes detected — skipped Expo Go preview update.
+
+            ---
+
+            ## 🌐 Web Preview
+
+            No code changes detected — skipped web preview deployment.
+
+  web-deploy:
+    name: Web Deploy (Production)
+    needs: [lint, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for code changes
+        id: changes
+        run: |
+          CODE_CHANGES=$(git diff --name-only HEAD~1 HEAD -- \
+            'app/' \
+            'components/' \
+            'context/' \
+            'lib/' \
+            'constants/' \
+            'hooks/' \
+            'assets/' \
+            'scripts/' \
+            '*.ts' \
+            '*.tsx' \
+            '*.js' \
+            '*.jsx' \
+            '*.json' \
+            '*.css' \
+            'global.css' \
+            'tailwind.config.*' \
+            'metro.config.*' \
+            'app.json' \
+            'app.config.*' \
+            'eas.json' \
+            'babel.config.*' \
+            'tsconfig.*' \
+            'nativewind-env.d.ts' \
+          )
+          if [ -n "$CODE_CHANGES" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Changed files:"
+            echo "$CODE_CHANGES"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No code changes detected, skipping web deploy"
+          fi
+
+      - name: Setup Node
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup EAS CLI
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        if: steps.changes.outputs.has_changes == 'true'
+        run: npm ci
+
+      - name: Export for web
+        if: steps.changes.outputs.has_changes == 'true'
+        run: npx expo export --platform web
+
+      - name: Deploy to EAS Hosting (production)
+        if: steps.changes.outputs.has_changes == 'true'
+        run: eas deploy --alias production --non-interactive

@@ -11,7 +11,10 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "jest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "export:web": "expo export --platform web",
+    "deploy:web": "expo export --platform web && eas deploy --non-interactive",
+    "deploy:web:preview": "expo export --platform web && eas deploy --non-interactive"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
