@@ -9,6 +9,10 @@ const mockDismiss = jest.fn();
 
 let mockMemes: Array<Record<string, unknown>> = [];
 
+jest.mock('@/context/ThemeContext', () => ({
+  useAppTheme: () => ({ themeId: 'default', setTheme: jest.fn(), isLoading: false }),
+}));
+
 jest.mock('@/context/MemeLibrary', () => ({
   useMemeLibrary: () => ({
     deleteMeme: mockDeleteMeme,
