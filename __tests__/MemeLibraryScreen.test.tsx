@@ -220,18 +220,22 @@ describe('MemeLibraryScreen', () => {
     expect(queryByText('dog')).toBeNull();
   });
 
-  it('shows active filter label on the morphed button', () => {
+  it('morphs into a glass pill showing active filter label', () => {
     mockedUseMemeLibrary.mockReturnValue({
       memes: [makeMeme({ id: '1', isFavorite: true })],
       isLoading: false,
     });
 
-    const { getByTestId, getByText } = render(<MemeLibraryScreen />);
+    const { getByTestId, getByText, queryByTestId } = render(<MemeLibraryScreen />);
+
+    // No glass pill initially
+    expect(queryByTestId('filter-pill')).toBeNull();
 
     fireEvent.press(getByTestId('filter-button'));
     fireEvent.press(getByTestId('filter-option-favorites'));
 
-    // The button should now show the active filter label
+    // Button morphed into glass pill with label
+    expect(getByTestId('filter-pill')).toBeTruthy();
     expect(getByText('Favorites')).toBeTruthy();
   });
 
