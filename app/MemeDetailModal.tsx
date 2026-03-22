@@ -9,11 +9,23 @@ import { Text } from '@/components/ui/Text';
 import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useMemeLibrary } from '@/context/MemeLibrary';
+import { useAppTheme } from '@/context/ThemeContext';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { THEMES } from '@/lib/themes';
 
 export default function MemeDetailModal() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { memes, editTags, deleteMeme, toggleFavorite } = useMemeLibrary();
+  const { themeId } = useAppTheme();
+  const colorScheme = useColorScheme();
+  const colors = colorScheme === 'dark' ? THEMES[themeId].dark : THEMES[themeId].light;
+  // Theme HSL values are space-separated (e.g. "0 84.2% 60.2%").
+  // React Native needs comma-separated hsl(), so insert commas.
+  const hsl = (token: string) => `hsl(${token.replace(/ /g, ', ')})`;
+  const primaryColor = hsl(colors['--primary']);
+  const destructiveColor = hsl(colors['--destructive']);
+  const mutedForegroundColor = hsl(colors['--muted-foreground']);
 
   const meme = memes.find((m) => m.id === id);
   const [tags, setTags] = useState<string[]>(meme?.tags ?? []);
@@ -121,7 +133,7 @@ export default function MemeDetailModal() {
               onPress={handleShare}
               className="items-center gap-1 rounded-xl px-5 py-3 active:bg-muted"
             >
-              <IconSymbol name="square.and.arrow.up" size={24} color="#3b82f6" />
+              <IconSymbol name="square.and.arrow.up" size={24} color={primaryColor} />
               <Text className="text-xs text-muted-foreground">Share</Text>
             </Pressable>
 
@@ -132,7 +144,7 @@ export default function MemeDetailModal() {
               <IconSymbol
                 name={meme.isFavorite ? 'heart.fill' : 'heart'}
                 size={24}
-                color={meme.isFavorite ? '#ef4444' : '#f97316'}
+                color={meme.isFavorite ? destructiveColor : mutedForegroundColor}
               />
               <Text className="text-xs text-muted-foreground">
                 {meme.isFavorite ? 'Unfavorite' : 'Favorite'}
@@ -143,7 +155,7 @@ export default function MemeDetailModal() {
               onPress={handleDelete}
               className="items-center gap-1 rounded-xl px-5 py-3 active:bg-muted"
             >
-              <IconSymbol name="trash.fill" size={24} color="#ef4444" />
+              <IconSymbol name="trash.fill" size={24} color={destructiveColor} />
               <Text className="text-xs text-muted-foreground">Delete</Text>
             </Pressable>
           </View>
