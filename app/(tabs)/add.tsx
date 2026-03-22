@@ -152,7 +152,10 @@ export default function AddMemeScreen() {
   return (
     <View className="flex-1 bg-background">
       <View className="px-4 pb-3 pt-14">
-        <Text variant="h3" className="font-bold text-primary">
+        <Text
+          variant="h3"
+          className="font-bold text-primary-foreground bg-primary rounded-lg px-3 py-1 self-start"
+        >
           Add Meme
         </Text>
         <Text variant="muted" className="mt-1">
