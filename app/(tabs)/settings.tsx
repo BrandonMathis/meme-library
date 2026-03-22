@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, Share, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, Share, Switch, View } from 'react-native';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 
@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/Separator';
 import { Text } from '@/components/ui/Text';
 import { useMemeLibrary } from '@/context/MemeLibrary';
+import { useSettings } from '@/context/SettingsContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
 import { THEMES, THEME_IDS, type ThemeId } from '@/lib/themes';
@@ -103,6 +104,7 @@ function BuildInfoCard() {
 
 export default function SettingsScreen() {
   const { memes, destroyAll, exportData } = useMemeLibrary();
+  const { deleteAfterSave, setDeleteAfterSave } = useSettings();
   const { themeId, setTheme } = useAppTheme();
   const [isExporting, setIsExporting] = useState(false);
   const [isDestroying, setIsDestroying] = useState(false);
@@ -177,6 +179,28 @@ export default function SettingsScreen() {
                 </Pressable>
               );
             })}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Photo Settings</CardTitle>
+            <CardDescription>Configure how photos are handled when saving memes</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 gap-0.5 pr-4">
+                <Text className="font-medium">Save Space</Text>
+                <Text variant="small" className="text-muted-foreground">
+                  Automatically delete saved memes from photo library
+                </Text>
+              </View>
+              <Switch
+                testID="delete-after-save-toggle"
+                value={deleteAfterSave}
+                onValueChange={setDeleteAfterSave}
+              />
+            </View>
           </CardContent>
         </Card>
 

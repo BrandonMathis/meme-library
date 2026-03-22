@@ -52,6 +52,7 @@ jest.mock('expo-media-library', () => ({
   requestPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
   getAssetsAsync: jest.fn(() => Promise.resolve({ assets: [] })),
   addListener: jest.fn(() => ({ remove: jest.fn() })),
+  deleteAssetsAsync: jest.fn(() => Promise.resolve(true)),
   SortBy: { creationTime: 'creationTime' },
 }));
 
@@ -116,6 +117,12 @@ jest.mock('@/lib/meme-storage', () => ({
 jest.mock('@/lib/theme-storage', () => ({
   loadThemeId: jest.fn(() => Promise.resolve(null)),
   saveThemeId: jest.fn(() => Promise.resolve()),
+}));
+
+// Mock settings-storage
+jest.mock('@/lib/settings-storage', () => ({
+  loadDeleteAfterSave: jest.fn(() => Promise.resolve(false)),
+  saveDeleteAfterSave: jest.fn(() => Promise.resolve()),
 }));
 
 // Mock nativewind vars

@@ -3,15 +3,18 @@ import { render, waitFor, within } from '@testing-library/react-native';
 
 import SettingsScreen from '@/app/(tabs)/settings';
 import { MemeLibraryProvider } from '@/context/MemeLibrary';
+import { SettingsProvider } from '@/context/SettingsContext';
 import { AppThemeProvider } from '@/context/ThemeContext';
 
 function renderSettings() {
   return render(
-    <MemeLibraryProvider>
-      <AppThemeProvider>
-        <SettingsScreen />
-      </AppThemeProvider>
-    </MemeLibraryProvider>,
+    <SettingsProvider>
+      <MemeLibraryProvider>
+        <AppThemeProvider>
+          <SettingsScreen />
+        </AppThemeProvider>
+      </MemeLibraryProvider>
+    </SettingsProvider>,
   );
 }
 

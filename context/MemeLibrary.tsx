@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Platform } from 'react-native';
+import * as MediaLibrary from 'expo-media-library';
 
 import {
   copyImageToLocal,
@@ -11,6 +13,7 @@ import {
   updateMemeFavorite,
   updateMemeTags,
 } from '@/lib/meme-storage';
+import { useSettings } from '@/context/SettingsContext';
 
 export type MemeEntry = {
   id: string;
@@ -23,7 +26,7 @@ export type MemeEntry = {
 type MemeLibraryContextType = {
   memes: MemeEntry[];
   isLoading: boolean;
-  addMeme: (uri: string, tags: string[]) => Promise<void>;
+  addMeme: (uri: string, tags: string[], assetId?: string) => Promise<void>;
   deleteMeme: (id: string) => Promise<void>;
   editTags: (id: string, tags: string[]) => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
@@ -47,6 +50,7 @@ const MemeLibraryContext = createContext<MemeLibraryContextType>({
 });
 
 export function MemeLibraryProvider({ children }: { children: ReactNode }) {
+  const { deleteAfterSave } = useSettings();
   const [memes, setMemes] = useState<MemeEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
@@ -61,16 +65,27 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
     setLastAddedId(null);
   }, []);
 
-  const addMeme = useCallback(async (uri: string, tags: string[]) => {
-    const id = Date.now().toString();
-    const localUri = await copyImageToLocal(uri, id);
-    const createdAt = Date.now();
-    const meme: MemeEntry = { id, uri: localUri, tags, createdAt, isFavorite: false };
+  const addMeme = useCallback(
+    async (uri: string, tags: string[], assetId?: string) => {
+      const id = Date.now().toString();
+      const localUri = await copyImageToLocal(uri, id);
+      const createdAt = Date.now();
+      const meme: MemeEntry = { id, uri: localUri, tags, createdAt, isFavorite: false };
 
-    await insertMeme(meme);
-    setMemes((prev) => [meme, ...prev]);
-    setLastAddedId(id);
-  }, []);
+      await insertMeme(meme);
+      setMemes((prev) => [meme, ...prev]);
+      setLastAddedId(id);
+
+      if (deleteAfterSave && assetId && Platform.OS !== 'web') {
+        try {
+          await MediaLibrary.deleteAssetsAsync([assetId]);
+        } catch {
+          // Silently ignore deletion errors — the meme is already saved
+        }
+      }
+    },
+    [deleteAfterSave],
+  );
 
   const deleteMeme = useCallback(async (id: string) => {
     const uri = await removeMemeFromDb(id);

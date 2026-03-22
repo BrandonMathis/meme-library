@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { useMemeLibrary } from '@/context/MemeLibrary';
 
 export default function AddMemeModal() {
-  const { uri } = useLocalSearchParams<{ uri: string }>();
+  const { uri, assetId } = useLocalSearchParams<{ uri: string; assetId: string }>();
   const router = useRouter();
   const { addMeme } = useMemeLibrary();
 
@@ -23,7 +23,7 @@ export default function AddMemeModal() {
     if (uri && !isSaving) {
       setIsSaving(true);
       try {
-        await addMeme(uri, tags);
+        await addMeme(uri, tags, assetId);
         router.dismiss();
       } finally {
         setIsSaving(false);
