@@ -70,6 +70,27 @@ jest.mock('expo-file-system', () => ({
   },
 }));
 
+// Mock expo-constants
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: {
+    expoConfig: {
+      version: '1.0.0',
+      sdkVersion: '54.0.0',
+      runtimeVersion: { policy: 'sdkVersion' },
+    },
+  },
+}));
+
+// Mock expo-updates
+jest.mock('expo-updates', () => ({
+  channel: 'preview',
+  updateId: 'test-update-id-123',
+  runtimeVersion: '54.0.0',
+  createdAt: new Date('2025-06-15T12:00:00Z'),
+  isEmbeddedLaunch: false,
+}));
+
 // Mock expo-symbols
 jest.mock('expo-symbols', () => ({}));
 
