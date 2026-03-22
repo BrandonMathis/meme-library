@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, Share, Switch, View } from 'react-native';
+import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
 
 import {
   AlertDialog,
@@ -44,6 +46,59 @@ function ThemeSwatch({ themeId, isActive }: { themeId: ThemeId; isActive: boolea
         />
       ))}
     </View>
+  );
+}
+
+function BuildInfoRow({ label, value }: { label: string; value: string | undefined | null }) {
+  return (
+    <View className="flex-row items-center justify-between">
+      <Text className="text-muted-foreground">{label}</Text>
+      <Text className="max-w-[60%] text-right font-mono text-sm" numberOfLines={1}>
+        {value || 'N/A'}
+      </Text>
+    </View>
+  );
+}
+
+function BuildInfoCard() {
+  const expoConfig = Constants.expoConfig;
+  const appVersion = expoConfig?.version ?? null;
+  const runtimeVersion =
+    typeof expoConfig?.runtimeVersion === 'string'
+      ? expoConfig.runtimeVersion
+      : (expoConfig?.runtimeVersion?.policy ?? null);
+  const sdkVersion = expoConfig?.sdkVersion ?? null;
+
+  const channel = Updates.channel ?? null;
+  const updateId = Updates.updateId ?? null;
+  const runtimeVersionFromUpdates = Updates.runtimeVersion ?? null;
+  const createdAt = Updates.createdAt ? Updates.createdAt.toISOString() : null;
+  const isEmbeddedLaunch = Updates.isEmbeddedLaunch;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Build Info</CardTitle>
+        <CardDescription>App version and update details</CardDescription>
+      </CardHeader>
+      <CardContent className="gap-3">
+        <BuildInfoRow label="App version" value={appVersion} />
+        <Separator />
+        <BuildInfoRow label="SDK version" value={sdkVersion} />
+        <Separator />
+        <BuildInfoRow label="Runtime version" value={runtimeVersionFromUpdates ?? runtimeVersion} />
+        <Separator />
+        <BuildInfoRow label="Update channel" value={channel} />
+        <Separator />
+        <BuildInfoRow label="Update ID" value={updateId} />
+        <Separator />
+        <BuildInfoRow label="Published at" value={createdAt} />
+        <Separator />
+        <BuildInfoRow label="Embedded launch" value={isEmbeddedLaunch ? 'Yes' : 'No'} />
+        <Separator />
+        <BuildInfoRow label="Platform" value={Platform.OS} />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -166,6 +221,8 @@ export default function SettingsScreen() {
             </View>
           </CardContent>
         </Card>
+
+        <BuildInfoCard />
 
         <Card>
           <CardHeader>
