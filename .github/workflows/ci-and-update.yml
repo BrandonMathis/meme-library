@@ -226,7 +226,7 @@ jobs:
             echo "$CODE_CHANGES"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "No code changes detected, skipping EAS update"
+            echo "No code changes detected, skipping preview"
           fi
 
       - name: Setup Node
@@ -247,7 +247,7 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         run: npm ci
 
-      - name: Publish update
+      - name: Publish Expo Go update
         if: steps.changes.outputs.has_changes == 'true'
         id: eas-update
         run: |
@@ -272,6 +272,26 @@ jobs:
           echo "qr_url=$QR_URL" >> "$GITHUB_OUTPUT"
           echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
 
+      - name: Export for web
+        if: steps.changes.outputs.has_changes == 'true'
+        run: npx expo export --platform web
+
+      - name: Deploy web preview to EAS Hosting
+        if: steps.changes.outputs.has_changes == 'true'
+        id: web-deploy
+        run: |
+          ALIAS="pr-${{ github.event.pull_request.number }}"
+          eas deploy --alias "$ALIAS" --non-interactive --json > deploy-output.json 2>/dev/null
+          DEPLOY_URL=$(jq -r '.deploymentUrl // .url // empty' deploy-output.json)
+          ALIAS_URL=$(jq -r '.aliasUrl // empty' deploy-output.json)
+          DASHBOARD_URL=$(jq -r '.dashboardUrl // empty' deploy-output.json)
+          DEPLOY_ID=$(jq -r '.id // .deploymentIdentifier // empty' deploy-output.json)
+          PREVIEW_URL="${ALIAS_URL:-$DEPLOY_URL}"
+          echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+          echo "deploy_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "dashboard_url=$DASHBOARD_URL" >> "$GITHUB_OUTPUT"
+          echo "Web preview deployed to: $PREVIEW_URL"
+
       - name: Comment on PR
         if: steps.changes.outputs.has_changes == 'true'
         uses: marocchino/sticky-pull-request-comment@v2
@@ -288,8 +308,21 @@ jobs:
 
             **Or open directly:** [Open in Expo Go](${{ steps.qr.outputs.preview_url }})
 
-            > Update branch: `${{ steps.eas-update.outputs.branch }}`
-            > Updated on: ${{ github.event.pull_request.head.sha }}
+            > **Update branch:** `${{ steps.eas-update.outputs.branch }}`
+            > **Commit:** ${{ github.event.pull_request.head.sha }}
+
+            ---
+
+            ## 🌐 Web Preview
+
+            This PR has a live **web preview** deployed via EAS Hosting.
+
+            **[Open Web Preview](${{ steps.web-deploy.outputs.preview_url }})**
+
+            > **Alias:** `pr-${{ github.event.pull_request.number }}`
+            > **Deployment URL:** ${{ steps.web-deploy.outputs.deploy_url }}
+            > **Commit:** ${{ github.event.pull_request.head.sha }}
+            > **Dashboard:** [View in EAS Dashboard](${{ steps.web-deploy.outputs.dashboard_url }})
 
       - name: Comment no changes
         if: steps.changes.outputs.has_changes != 'true'
@@ -301,122 +334,8 @@ jobs:
 
             No code changes detected — skipped Expo Go preview update.
 
-  web-preview:
-    name: Web Preview
-    needs: [lint, test]
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+            ---
 
-      - name: Check for code changes
-        id: changes
-        run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          CODE_CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
-            'app/' \
-            'components/' \
-            'context/' \
-            'lib/' \
-            'constants/' \
-            'hooks/' \
-            'assets/' \
-            'scripts/' \
-            '*.ts' \
-            '*.tsx' \
-            '*.js' \
-            '*.jsx' \
-            '*.json' \
-            '*.css' \
-            'global.css' \
-            'tailwind.config.*' \
-            'metro.config.*' \
-            'app.json' \
-            'app.config.*' \
-            'eas.json' \
-            'babel.config.*' \
-            'tsconfig.*' \
-            'nativewind-env.d.ts' \
-          )
-          if [ -n "$CODE_CHANGES" ]; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "Changed files:"
-            echo "$CODE_CHANGES"
-          else
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "No code changes detected, skipping web preview"
-          fi
-
-      - name: Setup Node
-        if: steps.changes.outputs.has_changes == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Setup EAS CLI
-        if: steps.changes.outputs.has_changes == 'true'
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Install dependencies
-        if: steps.changes.outputs.has_changes == 'true'
-        run: npm ci
-
-      - name: Export for web
-        if: steps.changes.outputs.has_changes == 'true'
-        run: npx expo export --platform web
-
-      - name: Deploy to EAS Hosting
-        if: steps.changes.outputs.has_changes == 'true'
-        id: deploy
-        run: |
-          ALIAS="pr-${{ github.event.pull_request.number }}"
-          eas deploy --alias "$ALIAS" --non-interactive --json > deploy-output.json 2>/dev/null
-          DEPLOY_URL=$(jq -r '.deploymentUrl // .url // empty' deploy-output.json)
-          ALIAS_URL=$(jq -r '.aliasUrl // empty' deploy-output.json)
-          DASHBOARD_URL=$(jq -r '.dashboardUrl // empty' deploy-output.json)
-          DEPLOY_ID=$(jq -r '.id // .deploymentIdentifier // empty' deploy-output.json)
-          # Use alias URL if available, otherwise deployment URL
-          PREVIEW_URL="${ALIAS_URL:-$DEPLOY_URL}"
-          echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
-          echo "deploy_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
-          echo "alias_url=$ALIAS_URL" >> "$GITHUB_OUTPUT"
-          echo "dashboard_url=$DASHBOARD_URL" >> "$GITHUB_OUTPUT"
-          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
-          echo "Web preview deployed to: $PREVIEW_URL"
-
-      - name: Comment on PR
-        if: steps.changes.outputs.has_changes == 'true'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: web-preview
-          message: |
-            ## 🌐 Web Preview
-
-            This PR has a live **web preview** deployed via EAS Hosting.
-
-            **🔗 [Open Web Preview](${{ steps.deploy.outputs.preview_url }})**
-
-            > **Alias:** `pr-${{ github.event.pull_request.number }}`
-            > **Deployment URL:** ${{ steps.deploy.outputs.deploy_url }}
-            > **Commit:** ${{ github.event.pull_request.head.sha }}
-            > **Dashboard:** [View in EAS Dashboard](${{ steps.deploy.outputs.dashboard_url }})
-
-      - name: Comment no changes
-        if: steps.changes.outputs.has_changes != 'true'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: web-preview
-          message: |
             ## 🌐 Web Preview
 
             No code changes detected — skipped web preview deployment.
