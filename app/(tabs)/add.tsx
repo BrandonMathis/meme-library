@@ -151,11 +151,11 @@ export default function AddMemeScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="px-4 pb-3 pt-14">
-        <Text variant="h3" className="text-primary">
+      <View className="bg-primary px-4 pb-3 pt-14">
+        <Text variant="h3" className="text-primary-foreground">
           Add Meme
         </Text>
-        <Text variant="muted" className="mt-1">
+        <Text className="mt-1 text-primary-foreground/70">
           Tap a photo to add it to your library
         </Text>
       </View>
