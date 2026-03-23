@@ -10,6 +10,7 @@ import {
   getAllMemes,
   insertMeme,
   removeMeme as removeMemeFromDb,
+  resolveImageUri,
   updateMemeFavorite,
   updateMemeTags,
 } from '@/lib/meme-storage';
@@ -57,6 +58,12 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     getAllMemes()
+      .then(async (memes) => {
+        const resolved = await Promise.all(
+          memes.map(async (m) => ({ ...m, uri: await resolveImageUri(m.uri) })),
+        );
+        return resolved;
+      })
       .then(setMemes)
       .finally(() => setIsLoading(false));
   }, []);
@@ -68,12 +75,12 @@ export function MemeLibraryProvider({ children }: { children: ReactNode }) {
   const addMeme = useCallback(
     async (uri: string, tags: string[], assetId?: string) => {
       const id = Date.now().toString();
-      const localUri = await copyImageToLocal(uri, id);
+      const storedUri = await copyImageToLocal(uri, id);
+      const displayUri = await resolveImageUri(storedUri);
       const createdAt = Date.now();
-      const meme: MemeEntry = { id, uri: localUri, tags, createdAt, isFavorite: false };
 
-      await insertMeme(meme);
-      setMemes((prev) => [meme, ...prev]);
+      await insertMeme({ id, uri: storedUri, tags, createdAt, isFavorite: false });
+      setMemes((prev) => [{ id, uri: displayUri, tags, createdAt, isFavorite: false }, ...prev]);
       setLastAddedId(id);
 
       if (deleteAfterSave && assetId && Platform.OS !== 'web') {

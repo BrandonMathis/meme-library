@@ -89,6 +89,7 @@ jest.mock('@/lib/meme-storage', () => ({
   destroyAll: jest.fn(() => Promise.resolve()),
   exportData: jest.fn(() => Promise.resolve('[]')),
   copyImageToLocal: jest.fn((uri, id) => Promise.resolve('/local/' + id + '.jpg')),
+  resolveImageUri: jest.fn((uri) => Promise.resolve(uri)),
   deleteLocalImage: jest.fn(() => Promise.resolve()),
 }));
 
