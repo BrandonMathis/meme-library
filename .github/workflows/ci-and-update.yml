@@ -412,4 +412,4 @@ jobs:
 
       - name: Deploy to EAS Hosting (production)
         if: steps.changes.outputs.has_changes == 'true'
-        run: eas deploy --alias production --non-interactive
+        run: eas deploy --alias prod --non-interactive
