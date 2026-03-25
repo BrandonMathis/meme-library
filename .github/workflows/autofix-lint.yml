@@ -1,0 +1,90 @@
+name: Auto-fix Lint & Formatting
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-check:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    outputs:
+      lint_failed: ${{ steps.lint.outcome == 'failure' }}
+      format_failed: ${{ steps.format.outcome == 'failure' }}
+      typecheck_failed: ${{ steps.typecheck.outcome == 'failure' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        id: lint
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Run Prettier check
+        id: format
+        continue-on-error: true
+        run: npm run format
+
+      - name: TypeScript type-check
+        id: typecheck
+        continue-on-error: true
+        run: npm run typecheck
+
+      - name: Check for failures
+        if: steps.lint.outcome == 'failure' || steps.format.outcome == 'failure' || steps.typecheck.outcome == 'failure'
+        run: |
+          echo "CI checks failed — triggering Claude auto-fix"
+          echo "  ESLint: ${{ steps.lint.outcome }}"
+          echo "  Prettier: ${{ steps.format.outcome }}"
+          echo "  TypeScript: ${{ steps.typecheck.outcome }}"
+
+  autofix:
+    name: Claude Auto-fix
+    needs: lint-check
+    if: needs.lint-check.outputs.lint_failed == 'true' || needs.lint-check.outputs.format_failed == 'true' || needs.lint-check.outputs.typecheck_failed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Run Claude Code to fix CI errors
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: |
+            The CI pipeline for this PR has failed. Here's what failed:
+            - ESLint: ${{ needs.lint-check.outputs.lint_failed == 'true' && 'FAILED' || 'passed' }}
+            - Prettier formatting: ${{ needs.lint-check.outputs.format_failed == 'true' && 'FAILED' || 'passed' }}
+            - TypeScript type-check: ${{ needs.lint-check.outputs.typecheck_failed == 'true' && 'FAILED' || 'passed' }}
+
+            Please fix all lint, formatting, and type errors in this PR.
+
+            Steps:
+            1. Run `npm ci` to install dependencies
+            2. If Prettier failed, run `npx prettier --write .` to auto-format
+            3. If ESLint failed, run `npm run lint` to see errors, then fix them
+            4. If TypeScript failed, run `npm run typecheck` to see errors, then fix them
+            5. Verify all checks pass by running: `npm run lint && npm run format && npm run typecheck`
+            6. Commit and push the fixes to this PR branch
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: sonnet
+          timeout_minutes: 15
+          allowed_tools: 'Bash,Edit,Read,Write,Glob,Grep'

@@ -1,0 +1,139 @@
+name: Auto-resolve Merge Conflicts
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # Run every 6 hours to catch conflicts from main branch changes
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  resolve-conflicts:
+    name: Detect & Resolve Merge Conflicts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      max-parallel: 1
+      matrix:
+        pr: ${{ fromJson(needs.find-conflicting-prs.outputs.prs) }}
+    needs: find-conflicting-prs
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.pr.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Attempt simple merge from main
+        id: simple-merge
+        continue-on-error: true
+        run: |
+          git fetch origin main
+          git merge origin/main --no-edit
+
+      - name: Run Claude to resolve conflicts
+        if: steps.simple-merge.outcome == 'failure'
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: |
+            This PR (#${{ matrix.pr.number }}: "${{ matrix.pr.title }}") has merge conflicts with the main branch.
+
+            Please resolve the merge conflicts:
+
+            1. Run `git merge --abort` to reset the failed merge
+            2. Run `git fetch origin main` to ensure main is up to date
+            3. Run `git merge origin/main --no-commit` to start the merge
+            4. Check `git diff --name-only --diff-filter=U` to find conflicted files
+            5. For each conflicted file, read it, understand the intent of both sides, and resolve the conflict intelligently:
+               - Keep changes from both sides where they don't overlap
+               - For overlapping changes, prefer the PR branch changes but incorporate any necessary updates from main
+               - Remove all conflict markers (<<<<<<, ======, >>>>>>)
+            6. Stage resolved files with `git add`
+            7. Run `npm ci && npm run lint && npm run format && npm run typecheck && npm test` to verify the resolution doesn't break anything
+            8. If checks fail, fix the issues
+            9. Commit the merge with message: "Merge main into branch and resolve conflicts"
+            10. Push the result
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: sonnet
+          timeout_minutes: 20
+          allowed_tools: 'Bash,Edit,Read,Write,Glob,Grep'
+
+      - name: Push clean merge
+        if: steps.simple-merge.outcome == 'success'
+        run: git push
+
+      - name: Comment on PR
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ matrix.pr.number }}
+          header: merge-conflict-resolution
+          message: |
+            ## Merge Conflict Resolution
+
+            ${{ steps.simple-merge.outcome == 'success' && 'Main branch was merged cleanly into this PR — no conflicts.' || 'Merge conflicts were detected and Claude was invoked to resolve them. Please review the resolution.' }}
+
+            > **Triggered by:** push to `main` at ${{ github.sha }}
+
+  find-conflicting-prs:
+    name: Find PRs with Merge Conflicts
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      contents: read
+    outputs:
+      prs: ${{ steps.find.outputs.prs }}
+      has_conflicts: ${{ steps.find.outputs.has_conflicts }}
+    steps:
+      - name: Find open PRs with conflicts
+        id: find
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pulls = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              base: 'main',
+              per_page: 50,
+            });
+
+            const conflicting = [];
+            for (const pr of pulls.data) {
+              // Re-fetch each PR individually to get mergeable state
+              const detail = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+              });
+
+              // GitHub may need time to compute mergeable state
+              if (detail.data.mergeable === false || detail.data.mergeable_state === 'dirty') {
+                conflicting.push({
+                  number: pr.number,
+                  title: pr.title,
+                  head_ref: pr.head.ref,
+                });
+                console.log(`PR #${pr.number} (${pr.head.ref}) has merge conflicts`);
+              }
+            }
+
+            if (conflicting.length === 0) {
+              console.log('No PRs with merge conflicts found');
+              core.setOutput('prs', '[]');
+              core.setOutput('has_conflicts', 'false');
+            } else {
+              console.log(`Found ${conflicting.length} PR(s) with merge conflicts`);
+              core.setOutput('prs', JSON.stringify(conflicting));
+              core.setOutput('has_conflicts', 'true');
+            }
