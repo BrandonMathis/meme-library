@@ -46,6 +46,15 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsImageWithMaxCount": 1
+          },
+          "androidIntentFilters": ["image/*"]
+        }
       ]
     ],
     "experiments": {

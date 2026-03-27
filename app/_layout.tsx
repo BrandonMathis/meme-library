@@ -8,12 +8,14 @@ import { View } from 'react-native';
 import 'react-native-reanimated';
 
 import { PortalHost } from '@rn-primitives/portal';
+import { ShareIntentProvider } from 'expo-share-intent';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { MemeLibraryProvider } from '@/context/MemeLibrary';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { AppThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { SuccessAnimation } from '@/components/SuccessAnimation';
+import { useShareIntentHandler } from '@/hooks/use-share-intent-handler';
 import { THEMES, buildNavColors } from '@/lib/themes';
 
 export const unstable_settings = {
@@ -24,6 +26,7 @@ function InnerLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { themeId } = useAppTheme();
+  useShareIntentHandler();
 
   const theme = THEMES[themeId];
   const colors = isDark ? theme.dark : theme.light;
@@ -77,12 +80,14 @@ function InnerLayout() {
 
 export default function RootLayout() {
   return (
-    <SettingsProvider>
-      <MemeLibraryProvider>
-        <AppThemeProvider>
-          <InnerLayout />
-        </AppThemeProvider>
-      </MemeLibraryProvider>
-    </SettingsProvider>
+    <ShareIntentProvider>
+      <SettingsProvider>
+        <MemeLibraryProvider>
+          <AppThemeProvider>
+            <InnerLayout />
+          </AppThemeProvider>
+        </MemeLibraryProvider>
+      </SettingsProvider>
+    </ShareIntentProvider>
   );
 }
