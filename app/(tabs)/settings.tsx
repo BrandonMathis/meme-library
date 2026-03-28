@@ -144,8 +144,10 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="px-4 pb-3 pt-14">
-        <Text variant="h3">Settings</Text>
+      <View className="bg-primary px-4 pb-3 pt-14">
+        <Text variant="h3" className="text-primary-foreground">
+          Settings
+        </Text>
       </View>
       <ScrollView className="flex-1" contentContainerClassName="px-4 gap-4 pb-24">
         <Card>
