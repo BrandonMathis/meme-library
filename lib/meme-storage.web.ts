@@ -106,6 +106,18 @@ export async function destroyAll(): Promise<void> {
   await idbRequest(tx.objectStore(IMAGES_STORE).clear());
 }
 
+/** Resolve an idb:// URI to a blob URL that the browser can display. */
+export async function resolveImageUri(uri: string): Promise<string> {
+  const match = uri.match(/^idb:\/\/(.+)$/);
+  if (!match) return uri;
+
+  const db = await openDb();
+  const tx = db.transaction(IMAGES_STORE, 'readonly');
+  const blob = await idbRequest(tx.objectStore(IMAGES_STORE).get(match[1]) as IDBRequest<Blob>);
+  if (!blob) return uri;
+  return URL.createObjectURL(blob);
+}
+
 export async function exportData(): Promise<string> {
   const memes = await getAllMemes();
   return JSON.stringify(memes, null, 2);

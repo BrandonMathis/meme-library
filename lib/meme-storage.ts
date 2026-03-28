@@ -131,6 +131,11 @@ export async function destroyAll(): Promise<void> {
   }
 }
 
+/** On native, URIs are already file:// paths that Image can load directly. */
+export async function resolveImageUri(uri: string): Promise<string> {
+  return uri;
+}
+
 export async function exportData(): Promise<string> {
   const memes = await getAllMemes();
   return JSON.stringify(memes, null, 2);
