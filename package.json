@@ -79,7 +79,7 @@
       ]
     }
   },
-  "//overrides": "Override @tootallnate/once to fix GHSA-vpq2-c234-7xj6. Pulled in via jest-expo -> jest-environment-jsdom -> jsdom -> http-proxy-agent. Without this override, npm suggests downgrading jest-expo to v47 which is a breaking change.",
+  "//overrides": "Override @tootallnate/once to fix GHSA-vpq2-c234-7xj6. Pulled in via jest-expo -> jest-environment-jsdom -> jsdom -> http-proxy-agent.",
   "overrides": {
     "@tootallnate/once": "3.0.1"
   },
