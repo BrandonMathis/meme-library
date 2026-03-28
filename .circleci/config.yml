@@ -1,0 +1,319 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@7.1.0
+
+# ---------------------------------------------------------------------------
+# Reusable commands
+# ---------------------------------------------------------------------------
+commands:
+  setup-node-deps:
+    description: 'Checkout, install Node 20, and restore/save npm cache'
+    steps:
+      - checkout
+      - node/install:
+          node-version: '20'
+      - node/install-packages:
+          pkg-manager: npm
+
+  detect-code-changes:
+    description: 'Set HAS_CODE_CHANGES=true when app-related files changed'
+    parameters:
+      compare-ref:
+        type: string
+        default: HEAD~1
+    steps:
+      - run:
+          name: Detect code changes
+          command: |
+            CODE_CHANGES=$(git diff --name-only << parameters.compare-ref >> HEAD -- \
+              'app/' \
+              'components/' \
+              'context/' \
+              'lib/' \
+              'constants/' \
+              'hooks/' \
+              'assets/' \
+              'scripts/' \
+              '*.ts' \
+              '*.tsx' \
+              '*.js' \
+              '*.jsx' \
+              '*.json' \
+              '*.css' \
+              'global.css' \
+              'tailwind.config.*' \
+              'metro.config.*' \
+              'app.json' \
+              'app.config.*' \
+              'eas.json' \
+              'babel.config.*' \
+              'tsconfig.*' \
+              'nativewind-env.d.ts' \
+            ) || true
+            if [ -n "$CODE_CHANGES" ]; then
+              echo 'export HAS_CODE_CHANGES=true' >> "$BASH_ENV"
+              echo "Changed files:"
+              echo "$CODE_CHANGES"
+            else
+              echo 'export HAS_CODE_CHANGES=false' >> "$BASH_ENV"
+              echo "No code changes detected"
+            fi
+
+  setup-eas:
+    description: 'Install the EAS CLI and authenticate via EXPO_TOKEN'
+    steps:
+      - run:
+          name: Install EAS CLI
+          command: npm install -g eas-cli@latest
+      - run:
+          name: Verify EAS auth
+          command: eas whoami
+
+# ---------------------------------------------------------------------------
+# Jobs
+# ---------------------------------------------------------------------------
+jobs:
+  lint:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - setup-node-deps
+      - run:
+          name: Run ESLint
+          command: npm run lint
+      - run:
+          name: Run Prettier check
+          command: npm run format
+      - run:
+          name: TypeScript type-check
+          command: npm run typecheck
+
+  test:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - setup-node-deps
+      - run:
+          name: Run tests
+          command: npm test
+
+  security-audit:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - setup-node-deps
+      - run:
+          name: npm audit
+          command: npm audit --audit-level=moderate
+
+  eas-update:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - setup-node-deps
+      - detect-code-changes:
+          compare-ref: HEAD~1
+      - setup-eas
+      - run:
+          name: Publish EAS update
+          command: |
+            if [ "$HAS_CODE_CHANGES" != "true" ]; then
+              echo "No code changes — skipping EAS update"
+              exit 0
+            fi
+            COMMIT_MSG=$(git log -1 --pretty=%s)
+            eas update --branch main --message "$COMMIT_MSG"
+
+  pr-preview:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - setup-node-deps
+      - run:
+          name: Detect code changes (PR)
+          command: |
+            git fetch origin main --depth=1
+            CODE_CHANGES=$(git diff --name-only origin/main...HEAD -- \
+              'app/' \
+              'components/' \
+              'context/' \
+              'lib/' \
+              'constants/' \
+              'hooks/' \
+              'assets/' \
+              'scripts/' \
+              '*.ts' \
+              '*.tsx' \
+              '*.js' \
+              '*.jsx' \
+              '*.json' \
+              '*.css' \
+              'global.css' \
+              'tailwind.config.*' \
+              'metro.config.*' \
+              'app.json' \
+              'app.config.*' \
+              'eas.json' \
+              'babel.config.*' \
+              'tsconfig.*' \
+              'nativewind-env.d.ts' \
+            ) || true
+            if [ -n "$CODE_CHANGES" ]; then
+              echo 'export HAS_CODE_CHANGES=true' >> "$BASH_ENV"
+              echo "Changed files:"
+              echo "$CODE_CHANGES"
+            else
+              echo 'export HAS_CODE_CHANGES=false' >> "$BASH_ENV"
+              echo "No code changes detected — skipping preview"
+            fi
+      - setup-eas
+      - run:
+          name: Publish Expo Go update
+          command: |
+            if [ "$HAS_CODE_CHANGES" != "true" ]; then
+              echo "Skipping — no code changes"
+              exit 0
+            fi
+            PR_NUMBER="${CIRCLE_PULL_REQUEST##*/}"
+            BRANCH_NAME="pr-${PR_NUMBER}"
+            MESSAGE="PR #${PR_NUMBER}: ${CIRCLE_BRANCH}"
+            eas update --branch "$BRANCH_NAME" --message "$MESSAGE" --json > update-output.json
+            echo "export PR_BRANCH_NAME=$BRANCH_NAME" >> "$BASH_ENV"
+            GROUP_ID=$(jq -r '.[0].group' update-output.json)
+            echo "export GROUP_ID=$GROUP_ID" >> "$BASH_ENV"
+      - run:
+          name: Export for web
+          command: |
+            if [ "$HAS_CODE_CHANGES" != "true" ]; then exit 0; fi
+            npx expo export --platform web
+      - run:
+          name: Deploy web preview to EAS Hosting
+          command: |
+            if [ "$HAS_CODE_CHANGES" != "true" ]; then exit 0; fi
+            PR_NUMBER="${CIRCLE_PULL_REQUEST##*/}"
+            ALIAS="pr-${PR_NUMBER}"
+            eas deploy --alias "$ALIAS" --non-interactive --json > deploy-output.json 2>/dev/null
+            DEPLOY_URL=$(jq -r '.deploymentUrl // .url // empty' deploy-output.json)
+            ALIAS_URL=$(jq -r '.aliasUrl // empty' deploy-output.json)
+            PREVIEW_URL="${ALIAS_URL:-$DEPLOY_URL}"
+            echo "Web preview deployed to: $PREVIEW_URL"
+      - run:
+          name: Post PR comment
+          command: |
+            if [ "$HAS_CODE_CHANGES" != "true" ]; then exit 0; fi
+            PR_NUMBER="${CIRCLE_PULL_REQUEST##*/}"
+            if [ -z "$PR_NUMBER" ] || [ -z "$GITHUB_TOKEN" ]; then
+              echo "Skipping PR comment (no PR number or GITHUB_TOKEN)"
+              exit 0
+            fi
+            PROJECT_ID="0384d7bc-46fe-4f87-ba0f-9c97ef0cad38"
+            QR_URL="https://qr.expo.dev/eas-update?projectId=${PROJECT_ID}&groupId=${GROUP_ID}"
+            PREVIEW_URL="https://expo.dev/preview/update?message=PR%20Preview&updateRuntimeVersion=1.0.0&createdAt=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)&slug=exp&projectId=${PROJECT_ID}&group=${GROUP_ID}"
+            DEPLOY_URL=$(jq -r '.deploymentUrl // .url // empty' deploy-output.json)
+            ALIAS_URL=$(jq -r '.aliasUrl // empty' deploy-output.json)
+            DASHBOARD_URL=$(jq -r '.dashboardUrl // empty' deploy-output.json)
+            WEB_PREVIEW="${ALIAS_URL:-$DEPLOY_URL}"
+            BODY="## 📱 Expo Go Preview
+
+            This PR has a live preview available in **Expo Go**.
+
+            **Scan this QR code** to open the latest version on your device:
+
+            <a href=\"${PREVIEW_URL}\"><img src=\"${QR_URL}\" alt=\"pr-${PR_NUMBER} QR code\" width=\"250\" /></a>
+
+            **Or open directly:** [Open in Expo Go](${PREVIEW_URL})
+
+            > **Update branch:** \`pr-${PR_NUMBER}\`
+            > **Commit:** ${CIRCLE_SHA1}
+
+            ---
+
+            ## 🌐 Web Preview
+
+            This PR has a live **web preview** deployed via EAS Hosting.
+
+            **[Open Web Preview](${WEB_PREVIEW})**
+
+            > **Alias:** \`pr-${PR_NUMBER}\`
+            > **Deployment URL:** ${DEPLOY_URL}
+            > **Commit:** ${CIRCLE_SHA1}
+            > **Dashboard:** [View in EAS Dashboard](${DASHBOARD_URL})"
+            # Post or update the PR comment via the GitHub API
+            REPO_SLUG="${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
+            EXISTING_COMMENT_ID=$(curl -s \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              "https://api.github.com/repos/${REPO_SLUG}/issues/${PR_NUMBER}/comments" \
+              | jq -r '.[] | select(.body | contains("Expo Go Preview")) | .id' | head -1)
+            if [ -n "$EXISTING_COMMENT_ID" ]; then
+              curl -s -X PATCH \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n --arg body "$BODY" '{body: $body}')" \
+                "https://api.github.com/repos/${REPO_SLUG}/issues/comments/${EXISTING_COMMENT_ID}"
+            else
+              curl -s -X POST \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n --arg body "$BODY" '{body: $body}')" \
+                "https://api.github.com/repos/${REPO_SLUG}/issues/${PR_NUMBER}/comments"
+            fi
+
+  web-deploy:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - setup-node-deps
+      - detect-code-changes:
+          compare-ref: HEAD~1
+      - setup-eas
+      - run:
+          name: Export for web
+          command: |
+            if [ "$HAS_CODE_CHANGES" != "true" ]; then
+              echo "No code changes — skipping web deploy"
+              exit 0
+            fi
+            npx expo export --platform web
+      - run:
+          name: Deploy to EAS Hosting (production)
+          command: |
+            if [ "$HAS_CODE_CHANGES" != "true" ]; then exit 0; fi
+            eas deploy --alias prod --non-interactive
+
+# ---------------------------------------------------------------------------
+# Workflows
+# ---------------------------------------------------------------------------
+workflows:
+  ci:
+    jobs:
+      # -- Always run on every push and PR --
+      - lint
+      - test
+      - security-audit
+
+      # -- Deploy to EAS + web on main only --
+      - eas-update:
+          requires:
+            - lint
+            - test
+          filters:
+            branches:
+              only: main
+
+      - web-deploy:
+          requires:
+            - lint
+            - test
+          filters:
+            branches:
+              only: main
+
+      # -- PR preview on non-main branches --
+      - pr-preview:
+          requires:
+            - lint
+            - test
+          filters:
+            branches:
+              ignore: main
