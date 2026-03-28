@@ -80,7 +80,11 @@
     }
   },
   "overrides": {
-    "@tootallnate/once": "3.0.1"
+    "@tootallnate/once": "3.0.1",
+    "brace-expansion": ">=1.1.13",
+    "node-forge": ">=1.4.0",
+    "picomatch": ">=2.3.2",
+    "yaml": ">=2.8.3"
   },
   "private": true
 }
