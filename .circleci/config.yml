@@ -214,14 +214,13 @@ jobs:
             ALIAS_URL=$(jq -r '.aliasUrl // empty' deploy-output.json)
             DASHBOARD_URL=$(jq -r '.dashboardUrl // empty' deploy-output.json)
             WEB_PREVIEW="${ALIAS_URL:-$DEPLOY_URL}"
-            BODY=$(cat <<EOF
-            ## 📱 Expo Go Preview
+            BODY="## 📱 Expo Go Preview
 
             This PR has a live preview available in **Expo Go**.
 
             **Scan this QR code** to open the latest version on your device:
 
-            <a href="${PREVIEW_URL}"><img src="${QR_URL}" alt="pr-${PR_NUMBER} QR code" width="250" /></a>
+            <a href=\"${PREVIEW_URL}\"><img src=\"${QR_URL}\" alt=\"pr-${PR_NUMBER} QR code\" width=\"250\" /></a>
 
             **Or open directly:** [Open in Expo Go](${PREVIEW_URL})
 
@@ -239,9 +238,7 @@ jobs:
             > **Alias:** \`pr-${PR_NUMBER}\`
             > **Deployment URL:** ${DEPLOY_URL}
             > **Commit:** ${CIRCLE_SHA1}
-            > **Dashboard:** [View in EAS Dashboard](${DASHBOARD_URL})
-            EOF
-            )
+            > **Dashboard:** [View in EAS Dashboard](${DASHBOARD_URL})"
             # Post or update the PR comment via the GitHub API
             REPO_SLUG="${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
             EXISTING_COMMENT_ID=$(curl -s \
